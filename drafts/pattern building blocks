@@ -1,0 +1,25 @@
+-----------------------
+pattern building blocks
+-----------------------
+
+literal: nothing
+range: nothing
+or: array of integers
+repeat: integer
+link: recursive? NOPE
+
+feed a mold address into a structure
+add new character
+return new mold address
+
+OR
+
+a mold includes a copy of the structure and the mold address information
+this is better because the stuff is build in
+
+pattern types
+	structure
+	literal
+	range
+	repeat
+	or
