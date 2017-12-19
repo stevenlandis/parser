@@ -1,5 +1,3 @@
-// "data as choice"
-
 class PO {
 	constructor(pl, id) {
 		this.pl = pl;
@@ -7,40 +5,101 @@ class PO {
 	}
 	chooseParent() {
 		if (this.parent !== undefined) {
-			this.parents.shift();
+			++this.parentI;
 		}
-		if (this.parents.length === 0) {
-			throw Error("No parents to choose from");
+		if (this.parents.length === this.parentI) {
+			this.parent = undefined;
+			return;
 		}
-		this.parent = this.parents[0];
+		this.parent = this.parents[this.parentI];
 	}
 	get string() {
-		return 'PO[' + this.id + '], parents: ' + this.parents + ', complete: ' + this.complete + ', filled: ' + this.filled + ', index: ' + this.i;
+		var txt = '';
+
+		txt += 'PO[' + this.id + '], parents: ';
+		// for (var i in this.parents) {
+		// 	i = parseInt(i)
+		// 	if (i === this.parentI) {
+		// 		txt += '[[' + this.parents[i] + ']] ';
+		// 	} else {
+		// 		txt += '(' + this.parents[i] + ') ';
+		// 	}
+		// }
+
+		txt += ', complete: ' + this.complete;
+		txt += ', filled: ' + this.filled;
+		txt += ', index: ' + this.i;
+		txt += ', literal: ' + (this.constructor === LiteralPO);
+		if (this.constructor === LiteralPO) {
+			txt += ', choice: ' + this.choiceI;
+		}
+		return txt;
 	}
 }
 
 class LiteralPO extends PO{
 	constructor(pl, char) {
-		super(pl, char);
+		// leave the id blank for now
+		super(pl, undefined);
+
 		this.char = char;
-		this.pattern = char;
+		this.result = char;
 
 		this.filled = true;
 		this.complete = true;
 
-		//set parents
-		this.parents = [];
+		this.choices = [];
+		this.choiceI = 0;
 		for (var i of this.pl.literals) {
 			var n = this.pl.get(i);
 			if (n.contains(char)) {
-				this.parents.push(n.id);
+				this.choices.push(n.id);
 			}
+		}
+		this.chooseChoice();
+	}
+	get canCycle() {
+		return this.choiceI < this.choices.length;
+	}
+	resetChoice() {
+		if (this.choiceI !== 0) {
+			this.choiceI = 0;
+			this.chooseChoice();
+		} 
+	}
+	chooseChoice() {
+		if (this.choiceI < this.choices.length) {
+
+			// tis a swell and proper choice
+			this.id = this.choices[this.choiceI];
+			this.choiceI++;
+
+			this.i = 0;
+			this.pattern = this.pl.get(this.id);
+			this.parents = [];
+			this.parentI = 0;
+			for (var i of this.pattern.ups) {
+				this.parents.push(i);
+			}
+			this.chooseParent();
+		} else {
+
+			// it's out of chances
+			this.id = undefined;
+			this.pattern = undefined;
+			this.parents = [];
 		}
 	}
 	isMatch() {
 		return false;
 	}
 	isPossibleMatch() {
+		return false;
+	}
+	isBelow() {
+		return false;
+	}
+	isDirectlyBelow() {
 		return false;
 	}
 }
@@ -54,14 +113,41 @@ class PatternPO extends PO{
 		this.complete = pattern.defaultComplete;
 		this.data = [];
 		this.i = 0;
-		this.parents = Array.from(this.pattern.firstParents);
+		this.parents = [];
+		this.parentI = 0;
+		for (var i of this.pattern.ups) {
+			this.parents.push(i);
+		}
+		// this.parents = Array.from(this.pattern.firstParents);
+		this.chooseParent();
 	}
-	
+	get result() {
+		var res = '';
+		for (var i of this.data) {
+			res += '[' + i.result + ']';
+		}
+		return res;
+	}
 	isMatch(thing) {
 		return this.pattern.isMatch(this.i, thing);
 	}
 	isPossibleMatch(thing) {
 		return this.pattern.isPossibleMatch(this.i, thing);
+	}
+	isBelow(po) {
+		if (this.isDirectlyBelow(po)) {
+			return true;
+		}
+		return this.pattern.isBelow(po.id, this.i);
+	}
+	isDirectlyBelow(po) {
+		// var ID = po.parent[0];
+		// var index = po.parent[1];
+
+		// if (this.pattern.id === ID && this.i === index) {
+		// 	return true;
+		// }
+		return this.pattern.isDirectlyBelow(po.id, this.i);
 	}
 	add(childPO) {
 		this.data.push(childPO);
@@ -69,120 +155,11 @@ class PatternPO extends PO{
 		this.filled = this.pattern.isFilled(this.i);
 		this.complete = this.pattern.isComplete(this.i);
 	}
+	pop() {
+		var res = this.data.pop();
+		this.i--;
+		this.filled = this.pattern.isFilled(this.i);
+		this.complete = this.pattern.isComplete(this.i);
+		return res;
+	}
 }
-// /*
-// Ever subclass needs to implement
-// 	this.choices
-// 	this.data
-// 	this.complete
-// 	this.filled
-
-// 	this.lookingFor (can be a get or a property)
-
-// */
-
-// class PO {
-// 	constructor(pl) {
-// 		this.pl = pl;
-// 		this.choice = 0;
-// 		this.i = 0;
-// 	}
-// 	isMatch(pId) {
-// 		if (this.lookingFor.indexOf(pId) >= 0) {
-// 			return true;
-// 		}
-// 		return false;
-// 	}
-// 	get remainingChoices() {
-// 		return this.choices.length - this.choice;
-// 	}
-// 	get mold() {
-// 		return this.choices[this.choice];
-// 	}
-// 	get moldPattern() {
-// 		return this.pl.get(this.mold);
-// 	}
-// }
-
-// class LiteralPO extends PO {
-// 	constructor(pl, char) {
-// 		super(pl);
-// 		this.complete = true;
-// 		this.filled = true;
-// 		this.data = [char];
-
-// 		this.lookingFor = [];
-
-// 		// initialize choices
-// 		this.choices = [];
-// 		for (var i of this.pl.literals) {
-// 			var n = this.pl.get(i);
-// 			if (n.contains(char)) {
-// 				this.choices.push(n.id);
-// 			}
-// 		}
-// 	}
-// }
-
-// class PatternPO extends PO{
-// 	constructor(pl, pattern) {
-// 		super(pl);
-// 		this.pattern = pattern;
-// 		this.choices = Array.from(this.pattern.parents);
-// 	}
-// 	get lookingFor() {
-// 		var moldPat = this.pl.get(this.mold);
-// 		if (moldPat.constructor === List) {
-// 			if (this.i < moldPat.list.length) {
-// 				return moldPat.list[this.i];
-// 			}
-// 			return [];
-// 		} else if (moldPat.constructor === Or) {
-// 			if (this.i === 0) {
-// 				return moldPat.patterns;
-// 			} else {
-// 				return [];
-// 			}
-// 		} else if (moldPat.constructor === Repeat) {
-// 			return [moldPat.pattern];
-// 		}
-// 	}
-// }
-
-// class ListPO extends PatternPO {
-// 	constructor(pl, pattern) {
-// 		super(pl, pattern);
-// 		this.pattern = pattern;
-
-// 		// patterns must have at least one node, so they are never initially complete or filled
-// 		this.complete = false;
-// 		this.filled = false;
-// 	}
-// }
-
-// class OrPO extends PatternPO {
-// 	constructor(pl, pattern) {
-// 		super(pl, pattern);
-
-// 		this.complete = false;
-// 		this.filled = false;
-// 	}
-// }
-
-// class RepeatPO extends PatternPO {
-// 	constructor(pl, pattern) {
-// 		super(pl, pattern);
-
-// 		this.complete = true;
-// 		this.filled = false;
-// 	}
-// }
-
-// class RangePO extends PatternPO {
-// 	constructor(pl, pattern) {
-// 		super(pl, pattern);
-
-// 		this.complete = true;
-// 		this.filled = true;
-// 	}
-// }

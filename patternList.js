@@ -13,6 +13,7 @@ class PatternList {
 		this.setFirstParents();
 		this.setLastPatterns();
 		this.setNamed();
+		this.setUps();
 	}
 	Literal(char) {
 		var n = new Literal(char, this.ID, this);
@@ -71,30 +72,8 @@ class PatternList {
 		this.patterns.push(n);
 		return this.ID++;
 	}
-	Except(pattern, not) {
-		var n = new Except(pattern, not, this.ID, this);
-		var searchRes = this.search(n);
-		if (searchRes >= 0) {
-			// pr('The node ' + n.string + ' already exists');
-			return searchRes;
-		}
-
-		this.patterns.push(n);
-		return this.ID++;
-	}
 	List(list) {
 		var n = new List(list, this.ID, this);
-		var searchRes = this.search(n);
-		if (searchRes >= 0) {
-			// pr('The node ' + n.string + ' already exists');
-			return searchRes;
-		}
-
-		this.patterns.push(n);
-		return this.ID++;
-	}
-	Ignoreable(pattern) {
-		var n = new Ignoreable(pattern, this.ID, this);
 		var searchRes = this.search(n);
 		if (searchRes >= 0) {
 			// pr('The node ' + n.string + ' already exists');
@@ -114,9 +93,9 @@ class PatternList {
 	String(txt) {
 		var list = [];
 		for (var c of txt) {
-			list.push(pl.Literal(c));
+			list.push(this.Literal(c));
 		}
-		return pl.List(list);
+		return this.List(list);
 	}
 	setParents() {
 		// loop through all the patterns
@@ -125,6 +104,17 @@ class PatternList {
 			// loop through all the children and add pat as a parent
 			for (var child of pat.children) {
 				this.patterns[child].parents.add(pat.id);
+			}
+		}
+	}
+	setUps() {
+		for (var pat of this.patterns) {
+			for (var i of pat.childs) {
+				var newThing = [pat.id, parseInt(i[1])];
+				var child = this.patterns[i[0]];
+				if (!listHas(child.ups, newThing)) {
+					child.ups.push(newThing);
+				}
 			}
 		}
 	}
@@ -243,39 +233,47 @@ class PatternList {
 			txt += '' + p.id + ': ' + p.string;
 
 			txt += '\n    parents:';
-
 			for (var i of p.parents) {
 				txt += ' ' + i;
 			}
 
-			txt += '\n    all parents:';
-			for (var i of p.allParents) {
-				txt += ' ' + i;
+			txt += '\n    ups:';
+			for (var i of p.ups) {
+				txt += ' (' + i[0] + ', ' + i[1] + ')';
 			}
 
-			txt += '\n    children:';
-			for (var i of p.children) {
-				txt += ' ' + i;
-			}
+			// txt += '\n    all parents:';
+			// for (var i of p.allParents) {
+			// 	txt += ' ' + i;
+			// }
+
+			// txt += '\n    children:';
+			// for (var i of p.children) {
+			// 	txt += ' ' + i;
+			// }
 
 			txt += '\n    all children:';
 			for (var i of p.allChildren) {
 				txt += ' ' + i;
 			}
-
+			
 			txt += '\n    firsts:';
 			for (var i of p.firstPatterns) {
 				txt += ' ' + i;
 			}
 
-			txt += '\n    lasts:';
-			for (var i of p.lastPatterns) {
-				txt += ' ' + i;
-			}
+			// txt += '\n    lasts:';
+			// for (var i of p.lastPatterns) {
+			// 	txt += ' ' + i;
+			// }
 
-			txt += '\n    first parents:';
-			for (var i of p.firstParents) {
-				txt += ' ' + i;
+			// txt += '\n    first parents:';
+			// for (var i of p.firstParents) {
+			// 	txt += ' ' + i;
+			// }
+
+			if (p.constructor === List) {
+				txt += '\n    Last index: ' + p.endIndex;
 			}
 
 			txt += '\n    min size: ' + p.minSize;
@@ -297,72 +295,33 @@ class PatternList {
 		}
 		return -1;
 	}
-	// group4(txt, content) {
-	// 	var upStack = [];
-	// 	var downStack = [];
-	// 	for (var c of txt) {
-	// 		var po = this.getPO(c);
-	// 		downStack.unshift(po);
-	// 	}
-	// 	upStack.push(this.getPO(context));
+	group4(txt, context) {
+		var upStack = [];
+		var downStack = [];
+		for (var c of txt) {
+			var po = this.getPO(c);
+			downStack.unshift(po);
+		}
+		upStack.push(this.getPO(context));
 
-	// 	while (downStack.length > 0) {
-	// 		var downNode = downStack[downStack.length-1];
-	// 		var upNode = upStack[upStack.length-1];
+		var n = 1;
+		while (downStack.length > 0) {
+			if (n <= 0) {pr('maximum iterations exceeded');break;}--n;
+
+			var downNode = downStack[downStack.length-1];
+			var upNode = upStack[upStack.length-1];
+
+			pr('Down: ' + downNode.string);
+			pr('Up: ' + upNode.string);
 			
-	// 		if (upNode.parent === undefined) {
-	// 			// rewind, rewind
-	// 			if (/*upNode has children*/) {
-	// 				// upNode.pop
-	// 				// upStack.push(poped node);
-	// 			} else {
-	// 				// upNode has no children
-	// 				if (upNode is a literal) {
-	// 					downStack.push(upNode);
-						
-	// 				}
-	// 			}
-	// 		} else if (/*downNode is eventual first child of upNode*/) {
-	// 			downStack.pop();
-	// 			upStack.push(downNode);
-	// 		} else {
-	// 			//need to upgrade upNode
-	// 			downStack.push(upNode);
-	// 			upStack.pop();
-	// 			if (upStack.length === 0) {
-	// 				upStack.push(pl.getPO(context));
-	// 			}
-	// 			downNode = upNode;
-	// 			upNode = upStack[upStack.length-1];
-	// 			if (/*downNode parent and index match upNode parent and index*/) {
+			// test if it can push up
+			if (upNode.isPossibleMatch(downNode.parent)) {
+				pr('It can push up');
+			}
 
-	// 				downNode.nextParent();
-	// 				upNode.push(downNode);
-	// 				downStack.pop();
-
-	// 			} else {
-
-	// 				while (/*
-	// 					!(downNode's parent is defined
-	// 					and
-	// 					downNode's parent index is zero
-	// 					and
-	// 					downNode's parent is a possible match of upNode)
-	// 				*/) {
-	// 					downNode.nextParent();
-	// 				}
-
-	// 				if (downNode.parent === undefined) {
-	// 					//rewind
-	// 				} else {
-	// 					var newPO = pl.getPO(downNode.parent);
-	// 					upStack.push(newPO);
-	// 				}
-
-	// 			}
-	// 		}
-	// 	}
-	// }
+			
+		}
+	}
 	group3(txt, context) {
 		pr('Grouping ' + txt);
 		var upStack = [];
@@ -577,4 +536,15 @@ class PatternList {
 		// 	pd();
 		// }
 	}
+}
+
+// to use when searching for
+// v: [patternID, index]
+function listHas(list, v) {
+	for (var i of list) {
+		if (v[0] === i[0] && v[1] === i[1]) {
+			return true;
+		}
+	}
+	return false;
 }

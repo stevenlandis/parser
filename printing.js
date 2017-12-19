@@ -23,3 +23,9 @@ function pd() {
 		tabN--;
 	}
 }
+
+function assert(a) {
+	if (!a) {
+		throw Error('Assert Failed');
+	}
+}

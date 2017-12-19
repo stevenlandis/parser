@@ -78,6 +78,7 @@ var init = pl.List([
 	identifier,
 	ws,
 	pl.Literal('='),
+	pl.Literal('='),
 	ws,
 	number,
 	pl.Literal(';')
@@ -86,6 +87,7 @@ var init = pl.List([
 var assignment = pl.List([
 	identifier,
 	ws,
+	pl.Literal('='),
 	pl.Literal('='),
 	ws,
 	number,
@@ -125,8 +127,9 @@ var expression = pl.Or([
 
 
 pl.init();
-pl.disp();
+// pl.disp();
 
-// pl.group3('var stuff 12345', expression);
+var grouper = new Grouper(pl, 'var i      = 12345', expression);
+// grouper.group();
 
 // pl.group2('Hi there', 19);

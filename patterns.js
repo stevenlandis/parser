@@ -9,6 +9,7 @@ class Pattern {
 		this.firstPatterns = new Set();
 		this.firstParents = new Set();
 		this.lastPatterns = new Set();
+		this.ups = [];
 	}
 }
 
@@ -20,6 +21,9 @@ class List extends Pattern {
 			this.children.add(i);
 		}
 		this.isLiteral = false;
+		this.defaultFilled = false;
+		this.defaultComplete = false;
+		this._endIndex = undefined;
 	}
 	isFilled(index) {
 		if (index < this.list.length) {
@@ -28,7 +32,14 @@ class List extends Pattern {
 		return true;
 	}
 	isComplete(index) {
-		return this.isFilled(index);
+		return index >= this.endIndex;
+	}
+	get childs() {
+		var res = [];
+		for (var i in this.list) {
+			res.push([this.list[i], i]);
+		}
+		return res;
 	}
 	get string() {
 		var res = '[';
@@ -63,6 +74,51 @@ class List extends Pattern {
 			}
 		}
 		return res;
+	}
+	get endIndex() {
+		if (this._endIndex === undefined) {
+			var found = false;
+			for (var i = this.list.length-1; i >= 0; i--) {
+				var node = this.pl.get(this.list[i]);
+				if (!(node.constructor === Repeat || node.constructor === Ignoreable)) {
+					this._endIndex = i+1;
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				this._endIndex = 0;
+			}
+		}
+		return this._endIndex;
+	}
+	isBelow(id, index) {
+
+		// make sure that the index is valid
+		if (index >= this.list.length) {
+			return false;
+		}
+
+		if (this.list[index] === id) {
+			return true;
+		}
+
+		// now check to see if ID is in the firsts of list[index]
+		var pat = this.pl.get(this.list[index]);
+		if (pat.firstPatterns.has(id)) {
+			return true;
+		}
+
+		return false;
+	}
+	isDirectlyBelow(id, index) {
+		// make sure that the index is valid
+		if (index >= this.list.length) {
+			return false;
+		}
+
+		// if the ID is a direct match, true
+		return this.list[index] === id;
 	}
 	isMatch(index, thing) {
 		if (typeof thing !== 'number') {
@@ -138,6 +194,56 @@ class Or extends Pattern {
 	}
 	isComplete(index) {
 		return this.isFilled(index);
+	}
+	isBelow(id, index) {
+		if (this.isDirectlyBelow(id, index)) {
+			return true;
+		}
+
+		// make sure that the index is valid
+		if (index !== 0) {
+			return false;
+		}
+
+		// if the ID is a direct match, true
+		for (var i of this.patterns) {
+			if (i === id) {
+				return true;
+			}
+		}
+
+		// now check to see if ID is in the firsts of list[index]
+		for (var i of this.patterns) {
+			var fps = this.pl.get(i).firstPatterns;
+			if (fps.has(id)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+	isDirectlyBelow(id, index) {
+
+		// make sure that the index is valid
+		if (index !== 0) {
+			return false;
+		}
+
+		// if the ID is a direct match, true
+		for (var i of this.patterns) {
+			if (i === id) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+	get childs() {
+		var res = [];
+		for (var i of this.patterns) {
+			res.push([i, 0]);
+		}
+		return res;
 	}
 	get string() {
 		var res = '{';
@@ -222,12 +328,31 @@ class Repeat extends Pattern {
 
 		this.defaultFilled = false;
 		this.defaultComplete = true;
+
+		this.childs = [[this.pattern, 0]];
 	}
 	isFilled(index) {
 		return false;
 	}
 	isComplete(index) {
 		return true;
+	}
+	isBelow(id, index) {
+		// all indexes are valid
+		// if the ID is a direct match, true
+		if (this.pattern === id) {
+			return true;
+		}
+
+		var pat = this.pl.get(this.pattern);
+		if (pat.firstPatterns.has(id)) {
+			return true;
+		}
+
+		return false;
+	}
+	isDirectlyBelow(id, index) {
+		return this.pattern === id;
 	}
 	get string() {
 		return 'Repeat ' + this.pl.patterns[this.pattern].string + '';
@@ -282,6 +407,8 @@ class Literal extends Pattern {
 
 		this.defaultFilled = false;
 		this.defaultComplete = false;
+
+		this.childs = [];
 	}
 	contains(char) {
 		return this.char === char;
@@ -294,6 +421,12 @@ class Literal extends Pattern {
 	}
 	isComplete(index) {
 		return this.isFilled(index);
+	}
+	isBelow() {
+		return false;
+	}
+	isDirectlyBelow() {
+		return false;
 	}
 	get string() {
 		var c = this.char;
@@ -368,6 +501,8 @@ class Range extends Pattern {
 
 		this.defaultFilled = false;
 		this.defaultComplete = false;
+
+		this.childs = [];
 	}
 	isFilled(index) {
 		if (index === 0) {
@@ -384,6 +519,12 @@ class Range extends Pattern {
 				return true;
 			}
 		}
+		return false;
+	}
+	isBelow() {
+		return false;
+	}
+	isDirectlyBelow() {
 		return false;
 	}
 	get string() {
