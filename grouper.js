@@ -132,9 +132,10 @@ class Grouper {
 						// pr('upgrade: ' + testPO.string);
 						if (grandparent.isBelow(testPO)) {
 							// pr('this upgrade works');
-							testPO.add(upNode);
+							// testPO.add(upNode);
 							this.upStack.pop();
 							this.upStack.push(testPO);
+							this.upStack.push(upNode);
 							
 							if (this.downStack.length === 0) {
 								this.moves.push([1]);
@@ -154,7 +155,7 @@ class Grouper {
 					throw Error('Unknown move type: ' + move[0]);
 			}
 
-			// pi();this.disp();pd();
+			pi();this.disp();pd();
 		}
 		pr('it\'s done');
 		pr(this.string);
@@ -215,9 +216,11 @@ class Grouper {
 				break;
 			case 2:
 				// undo an upgrade
-				var pat = upNode.pop();
+				var pat = this.upStack.pop();
 				this.upStack.pop();
 				this.upStack.push(pat);
+				// this.upStack.pop();
+				// this.upStack.push(pat);
 				upNode = this.upStack[this.upStack.length-1];
 
 				move[1]++;
@@ -242,3 +245,7 @@ class Grouper {
 		}
 	}
 }
+
+/*
+The problem is, dealing with zero character patterns like optionals an repeats
+*/
