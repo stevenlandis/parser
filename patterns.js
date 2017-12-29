@@ -120,6 +120,13 @@ class List extends Pattern {
 		// if the ID is a direct match, true
 		return this.list[index] === id;
 	}
+	canSkip(index) {
+		if (index >= this.list.length) {
+			return false;
+		}
+
+		return this.pl.get(this.list[index]).minSize === 0;		
+	}
 	isMatch(index, thing) {
 		if (typeof thing !== 'number') {
 			return false;
@@ -238,6 +245,13 @@ class Or extends Pattern {
 
 		return false;
 	}
+	canSkip(index) {
+		if (index !== 0) {
+			return false;
+		}
+
+		return this.minSize === 0;
+	}
 	get childs() {
 		var res = [];
 		for (var i of this.patterns) {
@@ -354,6 +368,12 @@ class Repeat extends Pattern {
 	isDirectlyBelow(id, index) {
 		return this.pattern === id;
 	}
+	canSkip(index) {
+		if (index !== 0) {
+			return false;
+		}
+		return this.pl.get(this.pattern).minSize === 0;
+	}
 	get string() {
 		return 'Repeat ' + this.pl.patterns[this.pattern].string + '';
 	}
@@ -426,6 +446,9 @@ class Literal extends Pattern {
 		return false;
 	}
 	isDirectlyBelow() {
+		return false;
+	}
+	canSkip() {
 		return false;
 	}
 	get string() {
@@ -525,6 +548,9 @@ class Range extends Pattern {
 		return false;
 	}
 	isDirectlyBelow() {
+		return false;
+	}
+	canSkip() {
 		return false;
 	}
 	get string() {

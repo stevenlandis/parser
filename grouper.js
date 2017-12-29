@@ -9,8 +9,12 @@ class Grouper {
 			var po = pl.getPO(c);
 			this.downStack.unshift(po);
 		}
-		this.moves = [[0]];
+		this.moves = [];
+		this.options = [];
 		this.finished = false;
+	}
+	addMove(validIndex, canDo, Do, Undo) {
+		this.options.push(new Move(this, validIndex, canDo, Do, Undo));
 	}
 	disp() {
 		var us = this.upStack;
@@ -43,7 +47,70 @@ class Grouper {
 		}
 		pr(txt);
 	}
+	group2() {
+		this.moves.push([0, 0]);
+		pr('Grouping "' + this.txt + '"');
+
+		// pi();this.disp();pd();
+
+		var n = 500;
+		var i = 0;
+		while (this.downStack.length > 0 || this.upStack.length !== 1 || !this.upStack[0].complete) {
+			// if (n <= 0) {pr('maximum iterations exceeded');break;}--n;
+
+			var move = this.moves[this.moves.length-1];
+			var option = this.options[move[0]];
+			option.index = move[1];
+
+			if (option.isValidIndex()) {
+				if (option.canDo()) {
+					option.Do();
+					this.moves.push([0, 0]);
+				} else {
+					// go to the next move
+					// pr('Going to next move');
+					++move[1];
+				}
+			} else {
+				// check if move is the last
+				if (move[0]+1 === this.options.length) {
+					try {
+						this.backtrack();
+					} catch(err) {
+						throw Error('Out of moves after ' + i + ' iterations.');
+					}
+				} else {
+					this.moves[this.moves.length-1] = [move[0]+1, 0];
+					// pr('Going to next option');
+				}
+			}
+
+			++i;
+
+			// pi();this.disp();pd();
+		}
+		this.finished = true;
+		pr('It\s done with ' + i + ' iterations.');
+		pr(this.string);
+	}
+	backtrack() {
+		this.moves.pop();
+
+		if (this.moves.length === 0) {
+			throw Error('Out of moves to undo!');
+		}
+
+		var move = this.moves[this.moves.length-1];
+
+		var option = this.options[move[0]];
+		option.index = move[1];
+
+		option.undo();
+
+		++move[1];
+	}
 	group() {
+		this.moves.push([0]);
 		pr('Grouping "' + this.txt + '"');
 		var n = 200;
 		while (this.downStack.length > 0 || this.upStack.length !== 1 || !this.upStack[0].complete) {
@@ -268,6 +335,19 @@ class Grouper {
 				break;
 			default:
 				throw Error('Unknown undo move type: ' + move[0]);
+		}
+	}
+	get upNode() {
+		return this.upStack[this.upStack.length-1];
+	}
+	get downNode() {
+		return this.downStack[this.downStack.length-1];
+	}
+	get grandparent() {
+		if (this.upStack.length < 2) {
+			return pl.getPO(this.context);
+		} else {
+			return this.upStack[this.upStack.length-2];
 		}
 	}
 }

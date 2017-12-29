@@ -56,7 +56,8 @@ class LiteralPO extends PO{
 				this.choices.push(n.id);
 			}
 		}
-		this.chooseChoice();
+		this.choose(0);
+		// this.chooseChoice();
 	}
 	get canCycle() {
 		return this.choiceI < this.choices.length;
@@ -69,6 +70,7 @@ class LiteralPO extends PO{
 	}
 	choose(n) {
 		// assumes that n is a valid choice
+		this.choiceI = n;
 		this.id = this.choices[n];
 
 		this.i = 0;
@@ -182,6 +184,19 @@ class PatternPO extends PO{
 		// 	return true;
 		// }
 		return this.pattern.isDirectlyBelow(po.id, this.i);
+	}
+	canSkip() {
+		return this.pattern.canSkip(this.i);
+	}
+	skip() {
+		this.i++;
+		this.filled = this.pattern.isFilled(this.i);
+		this.complete = this.pattern.isComplete(this.i);
+	}
+	unSkip() {
+		this.i--;
+		this.filled = this.pattern.isFilled(this.i);
+		this.complete = this.pattern.isComplete(this.i);
 	}
 	add(childPO) {
 		this.data.push(childPO);
