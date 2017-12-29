@@ -19,7 +19,7 @@
 
 })();
 
-var track = 3;
+var track = 5;
 
 switch(track) {
 	case 0:
@@ -103,7 +103,7 @@ switch(track) {
 		pl.init();
 		pl.disp();
 
-		var g = new Grouper(pl, 'aaaaaaaa', list);
+		var g = new Grouper(pl, 'aaaaaaaaaaaaa', list);
 		g.group();
 		break;
 	case 3:
@@ -154,9 +154,9 @@ switch(track) {
 		pl.init();
 		// pl.disp();
 
-		var grouper = new Grouper(pl, 'var  i=12345;', expression);
+		var grouper = new Grouper(pl, 'var  i = 12345;', expression);
 		grouper.group();
 		break;
 	default:
-		throw Error('Undefined track');
+		// throw Error('Undefined track');
 }

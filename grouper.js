@@ -47,7 +47,7 @@ class Grouper {
 		pr('Grouping "' + this.txt + '"');
 		var n = 200;
 		while (this.downStack.length > 0 || this.upStack.length !== 1 || !this.upStack[0].complete) {
-			// if (n <= 0) {pr('maximum iterations exceeded');break;}--n;
+			if (n <= 0) {pr('maximum iterations exceeded');break;}--n;
 			// pr('-------- Iteration ' + n);
 
 			var downNode = this.downStack[this.downStack.length-1];
@@ -113,7 +113,8 @@ class Grouper {
 						// pr('no more possible upgrades, need to backtrack');
 						// undo the last move
 						this.moves.pop();
-						this.undo();
+						// this.undo();
+						this.moves.push([3]);
 
 						break;
 					}
@@ -150,6 +151,24 @@ class Grouper {
 						// pr('Upgrade is invalid because not zero indexed');
 						move[1]++;
 					}
+					break;
+				case 3:
+					// trying to cycle
+					// not hooked up yet
+					pr('cycling');
+					if (downNode.constructor !== LiteralPO || !downNode.canCycle) {
+						pr('can\'t cycle');
+						pr('choosing ' + move[1] + ' which is ' + downNode.canChoose(move[1]));
+						this.moves.pop();
+						this.undo();
+
+						break;
+					}
+
+					// can cycle 
+					downNode.chooseChoice();
+					this.moves.push([0]);
+
 					break;
 				default:
 					throw Error('Unknown move type: ' + move[0]);
@@ -225,20 +244,27 @@ class Grouper {
 
 				move[1]++;
 
-				if (move[1] >= upNode.parents.length && downNode.constructor === LiteralPO && downNode.canCycle) {
-					// pr('SUPER UPGRADE');
-					downNode.chooseChoice();
-					for (var i = 0; i < this.downStack.length-1; i++) {
-						var pat = this.downStack[i];
+				// if (move[1] >= upNode.parents.length && downNode.constructor === LiteralPO && downNode.canCycle) {
+				// 	// pr('SUPER UPGRADE');
+				// 	downNode.chooseChoice();
+				// 	for (var i = 0; i < this.downStack.length-1; i++) {
+				// 		var pat = this.downStack[i];
 
-						if (pat.constructor === LiteralPO) {
-							// pr('Resetting ' + pat.string);
-							pat.resetChoice();
-						}
-					}
-					this.moves.pop();
-					this.moves.push([0]);
-				}
+				// 		if (pat.constructor === LiteralPO) {
+				// 			// pr('Resetting ' + pat.string);
+				// 			pat.resetChoice();
+				// 		}
+				// 	}
+				// 	this.moves.pop();
+				// 	this.moves.push([0]);
+				// }
+				break;
+			case 3:
+				// undo a choose
+				downNode.unChooseChoice();
+				this.moves.pop();
+				this.undo();
+
 				break;
 			default:
 				throw Error('Unknown undo move type: ' + move[0]);

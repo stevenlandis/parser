@@ -67,6 +67,23 @@ class LiteralPO extends PO{
 			this.chooseChoice();
 		} 
 	}
+	choose(n) {
+		// assumes that n is a valid choice
+		this.id = this.choices[n];
+
+		this.i = 0;
+		this.pattern = this.pl.get(this.id);
+		this.parents = [];
+		this.parentI = 0;
+		for (var i of this.pattern.ups) {
+			this.parents.push(i);
+		}
+		this.chooseParent();
+	}
+	canChoose(n) {
+		// pr(n + ' < ' + this.choices.length);
+		return n < this.choices.length;
+	}
 	chooseChoice() {
 		if (this.choiceI < this.choices.length) {
 
@@ -89,6 +106,23 @@ class LiteralPO extends PO{
 			this.pattern = undefined;
 			this.parents = [];
 		}
+	}
+	unChooseChoice() {
+		if (this.choiceI <= 0) {
+			throw error('Can\'t unchoose choice of choiceI: ' + this.choiceI);
+		}
+
+		this.choiceI -= 1;
+		this.id = this.choices[this.choiceI-1];
+
+		this.i = 0;
+		this.pattern = this.pl.get(this.id);
+		this.parents = [];
+		this.parentI = 0;
+		for (var i of this.pattern.ups) {
+			this.parents.push(i);
+		}
+		this.chooseParent();
 	}
 	isMatch() {
 		return false;

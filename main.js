@@ -127,9 +127,9 @@ var expression = pl.Or([
 
 
 pl.init();
-// pl.disp();
+pl.disp();
 
-var grouper = new Grouper(pl, 'var i      = 12345', expression);
-// grouper.group();
+var grouper = new Grouper(pl, 'var i      == 12345;', expression);
+grouper.group();
 
 // pl.group2('Hi there', 19);
