@@ -19,6 +19,62 @@
 
 })();
 
+(function() {
+	var pl = new PatternList();
+		var a = pl.Literal('a');
+		var word = pl.List([a, pl.Repeat(a)]);
+		var list = pl.List([word, word, word]);
+	pl.init();
+	// pl.disp();
+
+	var grouper = new Grouper(pl, list);
+
+	grouper.group('aaaaaaaaaaaa');
+})();
+
+(function() {
+	var pl = new PatternList();
+		var wsc = pl.Or([
+			pl.Literal(' '),
+			pl.Literal('\n'),
+			pl.Literal('\t')
+		]);
+		var rws = pl.Repeat(wsc);
+		var ws = pl.List([wsc, rws]);
+		var numeral = pl.Range([['0', '9']]);
+		var integer = pl.List([numeral, pl.Repeat(numeral)]);
+		var decimal = pl.List([
+			integer,
+			rws,
+			pl.Literal('.'),
+			rws,
+			integer
+		]);
+		var negInt = pl.List([
+			pl.Literal('-'),
+			integer
+		]);
+		var exponent = pl.List([
+			pl.Or([integer, decimal]),
+			rws,
+			pl.Or([pl.Literal('e'), pl.Literal('E')]),
+			rws,
+			pl.Or([integer, negInt])
+		]);
+		var posNum = pl.Or([integer, decimal, exponent]);
+		var negNum = pl.List([
+			pl.Literal('-'),
+			posNum
+		]);
+		var number = pl.Or([posNum, negNum]);
+	pl.init();
+	// pl.disp();
+
+	var grouper = new Grouper(pl, number);
+
+	grouper.group('-100.123 e -42');
+})();
+
 var track = 5;
 
 switch(track) {

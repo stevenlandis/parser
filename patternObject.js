@@ -56,6 +56,9 @@ class LiteralPO extends PO{
 				this.choices.push(n.id);
 			}
 		}
+		if (this.choices.length === 0) {
+			throw Error("'" + char + "'" + ' is an impossible char');
+		}
 		this.choose(0);
 		// this.chooseChoice();
 	}
@@ -160,9 +163,9 @@ class PatternPO extends PO{
 	get result() {
 		var res = '';
 		for (var i of this.data) {
-			res += '[' + i.result + ']';
+			res += i.result;
 		}
-		return res;
+		return '[' + res + ']';
 	}
 	isMatch(thing) {
 		return this.pattern.isMatch(this.i, thing);

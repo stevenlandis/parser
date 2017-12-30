@@ -1,20 +1,209 @@
 class Grouper {
-	constructor(pl, txt, context) {
+	constructor(pl, context) {
 		this.pl = pl;
-		this.txt = txt;
 		this.context = context;
-		this.upStack = [pl.getPO(context)];
-		this.downStack = [];
-		for (var c of txt) {
-			var po = pl.getPO(c);
-			this.downStack.unshift(po);
-		}
 		this.moves = [];
 		this.options = [];
 		this.finished = false;
+
+		// add the options
+		// push up
+		this.addMove(
+			'Push Up',
+
+			// valid index
+			function() {
+				return this.index === 0;
+			},
+
+			// can do
+			function() {
+				if (this.grouper.downStack.length === 0) {
+					return false;
+				}
+				var upNode = this.grouper.upNode;
+				var downNode = this.grouper.downNode;
+
+				return upNode.isBelow(downNode);
+			},
+
+			// do
+			function() {
+				this.grouper.upStack.push(this.grouper.downStack.pop());
+			},
+
+			// undo
+			function() {
+				this.grouper.downStack.push(this.grouper.upStack.pop());
+			}
+		);
+
+		// collapse
+		this.addMove(
+			'Collapse',
+
+			// valid index
+			function() {
+				return this.index === 0;
+			},
+
+			// can do
+			function() {
+				var grandparent = this.grouper.grandparent;
+				var upNode = this.grouper.upNode;
+
+				return upNode.complete && grandparent.isDirectlyBelow(upNode);
+			},
+
+			// do
+			function() {
+				var grandparent = this.grouper.grandparent;
+				var upNode = this.grouper.upNode;
+
+				grandparent.add(upNode);
+
+				if (this.grouper.upStack.length === 1) {
+					this.grouper.upStack[0] = grandparent;
+				} else {
+					this.grouper.upStack.pop();
+				}
+			},
+
+			// undo
+			function() {
+				var upNode = this.grouper.upNode;
+				var pat = upNode.pop();
+
+				this.grouper.upStack.push(pat);
+			}
+		);
+
+		// upgrade
+		this.addMove(
+			'Upgrade',
+
+			// valid index
+			function() {
+				var upNode = this.grouper.upNode;
+				return this.index < upNode.parents.length;
+			},
+
+			// can do
+			function() {
+				var upNode = this.grouper.upNode;
+
+				if (!upNode.complete) {
+					return false;
+				}
+
+				var grandparent = this.grouper.grandparent;
+				var parentUpgrade = upNode.parents[this.index];
+
+				if (parentUpgrade[1] !== 0) {
+					return false;
+				}
+
+				var testPO = this.grouper.pl.getPO(parentUpgrade[0]);
+
+				return grandparent.isBelow(testPO);
+			},
+
+			// do
+			function() {
+				var upNode = this.grouper.upNode;
+				var parentUpgrade = upNode.parents[this.index];
+
+				var testPO = this.grouper.pl.getPO(parentUpgrade[0]);
+				testPO.add(upNode);
+
+				this.grouper.upStack.pop();
+				this.grouper.upStack.push(testPO);
+			},
+
+			// undo
+			function() {
+				var pat = this.grouper.upNode.pop();
+				this.grouper.upStack.pop();
+				this.grouper.upStack.push(pat);
+			}
+		);
+
+		// cycle
+		this.addMove(
+			'Cycle',
+
+			// valid index
+			function() {
+				if (this.grouper.downStack.length < 1) {
+					return false;
+				}
+
+				var downNode = this.grouper.downNode;
+
+				if (downNode.constructor !== LiteralPO) {
+					return false;
+				}
+
+				if (this.index === 0 && downNode.choiceI !== 0) {
+					return false;
+				}
+
+				return downNode.canChoose(this.index + 1);
+			},
+
+			// can do
+			function() {
+				return true;
+			},
+
+			// do
+			function() {
+				var downNode = this.grouper.downNode;
+
+				downNode.choose(this.index+1);
+			},
+
+			// undo
+			function() {
+				var downNode = this.grouper.downNode;
+
+				downNode.choose(0);
+			}
+		);
+
+		// skip
+		this.addMove(
+			'Skip',
+
+			// valid index
+			function() {
+				return this.index === 0;
+			},
+
+			// can do
+			function() {
+				var upNode = this.grouper.upNode;
+
+				if (upNode.constructor !== PatternPO) {
+					return false;
+				}
+
+				return upNode.canSkip();
+			},
+
+			// do
+			function() {
+				this.grouper.upNode.skip();
+			},
+
+			// undo
+			function() {
+				this.grouper.upNode.unSkip();
+			}
+		);
 	}
-	addMove(validIndex, canDo, Do, Undo) {
-		this.options.push(new Move(this, validIndex, canDo, Do, Undo));
+	addMove(name, validIndex, canDo, Do, Undo) {
+		this.options.push(new Move(this, name, validIndex, canDo, Do, Undo));
 	}
 	disp() {
 		var us = this.upStack;
@@ -47,11 +236,21 @@ class Grouper {
 		}
 		pr(txt);
 	}
-	group2() {
-		this.moves.push([0, 0]);
+	group(txt) {
+		var debug = false;
+
+		this.txt = txt;
+		this.downStack = [];
+		this.upStack = [this.pl.getPO(this.context)];
+		for (var c of txt) {
+			var po = this.pl.getPO(c);
+			this.downStack.unshift(po);
+		}
+
+		this.moves = [[0, 0]];
 		pr('Grouping "' + this.txt + '"');
 
-		// pi();this.disp();pd();
+		if (debug) {pi();this.disp();pd();}
 
 		var n = 500;
 		var i = 0;
@@ -66,9 +265,10 @@ class Grouper {
 				if (option.canDo()) {
 					option.Do();
 					this.moves.push([0, 0]);
+					if (debug) pr(option.name);
 				} else {
 					// go to the next move
-					// pr('Going to next move');
+					if (debug) pr('Going to next move');
 					++move[1];
 				}
 			} else {
@@ -79,19 +279,21 @@ class Grouper {
 					} catch(err) {
 						throw Error('Out of moves after ' + i + ' iterations.');
 					}
+					if (debug) pr('Undo: ' + option.name);
 				} else {
 					this.moves[this.moves.length-1] = [move[0]+1, 0];
-					// pr('Going to next option');
+					if (debug) pr('Going to next option');
 				}
 			}
 
 			++i;
 
-			// pi();this.disp();pd();
+			if (debug) {pi();this.disp();pd();}
 		}
 		this.finished = true;
-		pr('It\s done with ' + i + ' iterations.');
+		pr('It\'s done with ' + i + ' iterations and ' + this.moves.length + ' moves.');
 		pr(this.string);
+		// pr(this.upStack[0]);
 	}
 	backtrack() {
 		this.moves.pop();
@@ -109,7 +311,7 @@ class Grouper {
 
 		++move[1];
 	}
-	group() {
+	group2() {
 		this.moves.push([0]);
 		pr('Grouping "' + this.txt + '"');
 		var n = 200;
@@ -345,7 +547,7 @@ class Grouper {
 	}
 	get grandparent() {
 		if (this.upStack.length < 2) {
-			return pl.getPO(this.context);
+			return this.pl.getPO(this.context);
 		} else {
 			return this.upStack[this.upStack.length-2];
 		}

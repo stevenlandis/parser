@@ -311,7 +311,7 @@ class Or extends Pattern {
 		if (this._minSize === undefined) {
 			this._minSize = this.pl.get(this.patterns[0]).minSize;
 			for (var i = 1; i < this.patterns.length; i++) {
-				this._minSize = Math.min(this._minSize, pl.get(this.patterns[i]).minSize);
+				this._minSize = Math.min(this._minSize, this.pl.get(this.patterns[i]).minSize);
 			}
 		}
 		return this._minSize;
