@@ -129,6 +129,6 @@ var expression = pl.Or([
 pl.init();
 // pl.disp();
 
-var grouper = new Grouper(pl, expression);
+// var grouper = new Grouper(pl, expression);
 
-grouper.group('var jollyworth == 583;');
+// pl.group('var jollyworth == 583;', expression);

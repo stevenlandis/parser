@@ -29,7 +29,7 @@
 
 	var grouper = new Grouper(pl, list);
 
-	grouper.group('aaaaaaaaaaaa');
+	// grouper.group('aaaaaaaaaaaa');
 })();
 
 (function() {
@@ -40,6 +40,7 @@
 			pl.Literal('\t')
 		]);
 		var rws = pl.Repeat(wsc);
+		pl.name(rws, 'rws');
 		var ws = pl.List([wsc, rws]);
 		var numeral = pl.Range([['0', '9']]);
 		var integer = pl.List([numeral, pl.Repeat(numeral)]);
@@ -67,15 +68,171 @@
 			posNum
 		]);
 		var number = pl.Or([posNum, negNum]);
+		pl.name(number, 'number');
+
+		var paren = pl.Reserve();
+
+		var node = pl.Or([number, paren]);
+
+		var exponent = pl.List([
+			node,
+			rws,
+			pl.Literal('^'),
+			rws,
+			node,
+			pl.Repeat(pl.List([
+				rws,
+				pl.Literal('^'),
+				rws,
+				node
+			]))
+		]);
+		pl.name(exponent, 'exponent');
+
+		var multNode = pl.Or([node, exponent]);
+		var mult = pl.List([
+			multNode,
+			pl.Literal('*'),
+			multNode,
+			pl.Repeat(pl.List([
+				pl.Literal('*'),
+				multNode
+			]))
+		]);
+		pl.name(mult, 'multiplication');
+
+		var addNode = pl.Or([multNode, mult]);
+		var add = pl.List([
+			addNode,
+			pl.Literal('+'),
+			addNode,
+			pl.Repeat(pl.List([
+				pl.Literal('+'),
+				addNode
+			]))
+		]);
+		pl.name(add, 'add');
+
+		var expression = pl.Or([
+			number,
+			exponent,
+			mult,
+			add,
+			paren
+		]);
+
+		pl.DefList(paren, [
+			pl.Literal('('),
+			expression,
+			pl.Literal(')')
+		]);
+		pl.name(paren, 'parenthases');
 	pl.init();
 	// pl.disp();
 
-	var grouper = new Grouper(pl, number);
-
-	grouper.group('-100.123 e -42');
+	// pl.group('1 ^ 2 ^      3', expression);
 })();
 
-var track = 5;
+(function() {
+	var pl = new PatternList();
+		var ws = pl.Literal(' ');
+		var rws = pl.Repeat(ws);
+
+		var numeral = pl.Range([['0', '9']]);
+		var number = pl.List([
+			numeral,
+			pl.Repeat(numeral)
+		]);
+
+		var add = pl.List([
+			number,
+			rws,
+			pl.Literal('+'),
+			rws,
+			number,
+			pl.Repeat(pl.List([
+				rws,
+				pl.Literal('+'),
+				rws,
+				number
+			]))
+		]);
+
+	pl.init();
+	// pl.disp();
+
+	// pl.group('1 + 1 + 1', add);
+})();
+
+// oh god not recursion
+(function() {
+	var pl = new PatternList();
+		var letter = pl.Range([['A', 'Z'], ['a', 'z']]);
+		var word = pl.Reserve();
+		pl.DefList(word, [
+			letter,
+			pl.Repeat(letter)
+		]);
+		pl.name(word, 'word');
+
+		var thing = pl.Reserve();
+		pl.DefList(thing, [
+			pl.Or([thing, word]),
+			pl.Literal(')')
+		]);
+		pl.name(thing, 'thing');
+	pl.init();
+	// pl.disp();
+
+	// pl.group('stuff)))))))))', thing);
+})();
+
+(function() {
+	var pl = new PatternList();
+		var letter = pl.Range([['A', 'Z'], ['a', 'z']]);
+		var word = pl.Reserve();
+		pl.DefList(word, [
+			letter,
+			pl.Repeat(letter)
+		]);
+		pl.name(word, 'word');
+
+		var thing = pl.Reserve();
+		pl.DefList(thing, [
+			pl.Literal('('),
+			pl.Or([thing, word])
+		]);
+		pl.name(thing, 'thing');
+	pl.init();
+	// pl.disp();
+
+	// pl.group('(((((stuff', thing);
+})();
+
+(function() {
+	var pl = new PatternList();
+		var letter = pl.Range([['A', 'Z'], ['a', 'z']]);
+		var word = pl.Reserve();
+		pl.DefList(word, [
+			letter,
+			pl.Repeat(letter)
+		]);
+		pl.name(word, 'word');
+
+		var thing = pl.Reserve();
+		pl.DefList(thing, [
+			pl.Literal('('),
+			pl.Or([thing, word]),
+			pl.Literal(')')
+		]);
+		pl.name(thing, 'thing');
+	pl.init();
+	// pl.disp();
+
+	// pl.group('(((((s)))))', thing);
+})();
+
+var track = 0;
 
 switch(track) {
 	case 0:
@@ -89,7 +246,13 @@ switch(track) {
 
 		var keyWords = pl.Or([VAR,FOR]);
 
-		var identifier = word;
+		var identifier = pl.List([
+			word,
+			pl.Repeat(pl.List([
+				pl.Literal('.'),
+				word
+			]))
+		]);
 
 		var numeral = pl.Range([['0','9']]);
 		var number = pl.List([numeral, pl.Repeat(numeral)]);
@@ -103,32 +266,111 @@ switch(track) {
 			VAR,
 			ws,
 			identifier,
-			ws,
+			rws,
 			pl.Literal('='),
-			pl.Literal('='),
-			ws,
-			number,
-			pl.Literal(';')
+			rws,
+			number
 		]);
 
 		var assignment = pl.List([
 			identifier,
-			ws,
+			rws,
 			pl.Literal('='),
-			pl.Literal('='),
-			ws,
-			number,
-			pl.Literal(';')
+			rws,
+			number
+		]);
+
+		var increment = pl.List([
+			identifier,
+			pl.Literal('+'),
+			pl.Literal('+')
+		]);
+
+		var comparison = pl.List([
+			pl.Or([
+				number,
+				identifier
+			]),
+			rws,
+			pl.Or([
+				pl.Literal('<'),
+				pl.Literal('>')
+			]),
+			rws,
+			pl.Or([
+				number,
+				identifier
+			])
+		]);
+
+		var func = pl.List([
+			identifier,
+			rws,
+			pl.Literal('('),
+			pl.Literal(')')
 		]);
 
 		var expression = pl.Or([
-			init, assignment
+			init,
+			assignment,
+			increment,
+			comparison,
+			func
 		]);
 
-		pl.init();
+		var forLoop = pl.Reserve();
 
-		var grouper = new Grouper(pl, 'var  i      ==  12345;', expression);
-		grouper.group();
+		var content = pl.Or([
+			forLoop,
+			pl.List([
+				expression,
+				rws,
+				pl.Literal(';')
+			])
+		]);
+
+		var contentList = pl.List([
+			content,
+			pl.Repeat(pl.List([
+				rws,
+				content
+			]))
+		]);
+
+		pl.name(expression, 'expression');
+
+		pl.DefList(forLoop, [
+			FOR,
+			rws,
+			pl.Literal('('),
+			rws,
+			expression,
+			rws,
+			pl.Literal(';'),
+			rws,
+			expression,
+			rws,
+			pl.Literal(';'),
+			rws,
+			expression,
+			rws,
+			pl.Literal(')'),
+			rws,
+			pl.Literal('{'),
+			rws,
+			contentList,
+			rws,
+			pl.Literal('}')
+		]);
+		pl.name(forLoop, 'for loop');
+
+		pl.List([]);
+
+		pl.init();
+		pl.disp();
+
+		pl.group('for (var i = 0; i < 10;i++) {\n\tk++;\n}\ni++;', contentList);
+		// pl.group('for (var i = 0; i < 10; i++) {\n\tvar j = 2;\n\tvar k = 5;\n\tk = 17;\n\tk++;\n}', contentList);
 		break;
 	case 1:
 		var pl = new PatternList();
@@ -137,14 +379,14 @@ switch(track) {
 		var word = pl.List([
 			letter, letter, pl.Repeat(letter)
 		]);
+		pl.name(word, 'word');
 
 		var list = pl.List([word, word]);
 
 		pl.init();
 		pl.disp();
 
-		var g = new Grouper(pl, 'aaaaaaaaa', list);
-		g.group();
+		pl.group('aaaaaaaaa', list);
 		break;
 	case 2:
 		var pl = new PatternList();
@@ -159,8 +401,7 @@ switch(track) {
 		pl.init();
 		pl.disp();
 
-		var g = new Grouper(pl, 'aaaaaaaaaaaaa', list);
-		g.group();
+		pl.group('aaaaaaaaaaaaa', list);
 		break;
 	case 3:
 		var pl = new PatternList();
@@ -210,8 +451,7 @@ switch(track) {
 		pl.init();
 		// pl.disp();
 
-		var grouper = new Grouper(pl, 'var  i = 12345;', expression);
-		grouper.group();
+		pl.group('var  i = 12345;', expression);
 		break;
 	default:
 		// throw Error('Undefined track');

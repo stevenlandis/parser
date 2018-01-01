@@ -10,6 +10,7 @@ class Pattern {
 		this.firstParents = new Set();
 		this.lastPatterns = new Set();
 		this.ups = [];
+		this.name = '';
 	}
 }
 
@@ -42,6 +43,9 @@ class List extends Pattern {
 		return res;
 	}
 	get string() {
+		if (this.name !== '') {
+			return this.name;
+		}
 		var res = '[';
 		for (var i in this.list) {
 			if (i > 0) {
@@ -91,6 +95,15 @@ class List extends Pattern {
 			}
 		}
 		return this._endIndex;
+	}
+	get firstSolidIndex() {
+		for (var i in this.list) {
+			var pat = this.pl.get(this.list[i]);
+			if (pat.minSize !== 0) {
+				return parseInt(i);
+			}
+		}
+		return this.list.length;
 	}
 	isBelow(id, index) {
 
@@ -192,6 +205,8 @@ class Or extends Pattern {
 
 		this.defaultFilled = false;
 		this.defaultComplete = false;
+
+		this.firstSolidIndex = 0;
 	}
 	isFilled(index) {
 		if (index === 0) {
@@ -260,6 +275,9 @@ class Or extends Pattern {
 		return res;
 	}
 	get string() {
+		if (this.name !== '') {
+			return this.name;
+		}
 		var res = '{';
 		for (var i in this.patterns) {
 			if (i > 0) {
@@ -344,6 +362,8 @@ class Repeat extends Pattern {
 		this.defaultComplete = true;
 
 		this.childs = [[this.pattern, 0]];
+
+		this.firstSolidIndex = 0;
 	}
 	isFilled(index) {
 		return false;
@@ -369,12 +389,12 @@ class Repeat extends Pattern {
 		return this.pattern === id;
 	}
 	canSkip(index) {
-		if (index !== 0) {
-			return false;
-		}
-		return this.pl.get(this.pattern).minSize === 0;
+		return false;
 	}
 	get string() {
+		if (this.name !== '') {
+			return this.name;
+		}
 		return 'Repeat ' + this.pl.patterns[this.pattern].string + '';
 	}
 	get first() {
@@ -429,6 +449,8 @@ class Literal extends Pattern {
 		this.defaultComplete = false;
 
 		this.childs = [];
+
+		this.firstSolidIndex = 0;
 	}
 	contains(char) {
 		return this.char === char;
@@ -526,6 +548,8 @@ class Range extends Pattern {
 		this.defaultComplete = false;
 
 		this.childs = [];
+
+		this.firstSolidIndex = 0;
 	}
 	isFilled(index) {
 		if (index === 0) {

@@ -39,17 +39,6 @@ class PatternList {
 		this.literals.push(n.id);
 		return this.ID++;
 	}
-	Named(name, pattern) {
-		var n = new Named(name, pattern, this.ID, this);
-		var searchRes = this.search(n);
-		if (searchRes >= 0) {
-			// pr('The node ' + n.string + ' already exists');
-			return searchRes;
-		}
-
-		this.patterns.push(n);
-		return this.ID++;
-	}
 	Or(patterns) {
 		var n = new Or(patterns, this.ID, this);
 		var searchRes = this.search(n);
@@ -60,6 +49,11 @@ class PatternList {
 
 		this.patterns.push(n);
 		return this.ID++;
+	}
+	DefOr(id, patterns) {
+		var n = new Or(patterns, id, this);
+		this.patterns[id] = n;
+		return id;
 	}
 	Repeat(pattern) {
 		var n = new Repeat(pattern, this.ID, this);
@@ -72,6 +66,11 @@ class PatternList {
 		this.patterns.push(n);
 		return this.ID++;
 	}
+	DefRepeat(id, pattern) {
+		var n = new Repeat(pattern, id, this);
+		this.patterns[id] = n;
+		return id;
+	}
 	List(list) {
 		var n = new List(list, this.ID, this);
 		var searchRes = this.search(n);
@@ -83,12 +82,17 @@ class PatternList {
 		this.patterns.push(n);
 		return this.ID++;
 	}
+	DefList(id, list) {
+		var n = new List(list, id, this);
+		this.patterns[id] = n;
+		return id;
+	}
 	Reserve() {
 		this.patterns.push(undefined);
 		return this.ID++;
 	}
-	defineNamed(id, name, pattern) {
-		this.patterns[id] = new Named(name, pattern, id, this);
+	name(id, name) {
+		this.patterns[id].name = name;
 	}
 	String(txt) {
 		var list = [];
@@ -277,6 +281,7 @@ class PatternList {
 			}
 
 			txt += '\n    min size: ' + p.minSize;
+			txt += '\n    first solid index: ' + p.firstSolidIndex;
 		}
 		txt += '\n\n Literals:';
 		for (var i of this.literals) {
@@ -289,252 +294,15 @@ class PatternList {
 	}
 	search(n) {
 		for (var p of this.patterns) {
-			if (p.equals(n)) {
+			if (p !== undefined && p.equals(n)) {
 				return p.id;
 			}
 		}
 		return -1;
 	}
-	group4(txt, context) {
-		var upStack = [];
-		var downStack = [];
-		for (var c of txt) {
-			var po = this.getPO(c);
-			downStack.unshift(po);
-		}
-		upStack.push(this.getPO(context));
-
-		var n = 1;
-		while (downStack.length > 0) {
-			if (n <= 0) {pr('maximum iterations exceeded');break;}--n;
-
-			var downNode = downStack[downStack.length-1];
-			var upNode = upStack[upStack.length-1];
-
-			pr('Down: ' + downNode.string);
-			pr('Up: ' + upNode.string);
-			
-			// test if it can push up
-			if (upNode.isPossibleMatch(downNode.parent)) {
-				pr('It can push up');
-			}
-
-			
-		}
-	}
-	group3(txt, context) {
-		pr('Grouping ' + txt);
-		var upStack = [];
-		var downStack = [];
-		for (var c of txt) {
-			var po = this.getPO(c);
-			downStack.unshift(po);
-		}
-		upStack.push(this.getPO(context));
-		
-		var n = 0;
-		while (downStack.length > 0 && n < 20) {
-			n++;
-			//set the context
-			var ctx;
-			if (upStack.length === 0) {
-				ctx = [context];
-			} else {
-				ctx = upStack[upStack.length-1];
-			}
-			this.drawGouping(upStack, downStack);
-			pr('Context: ' + ctx.string);
-			
-
-			var top = downStack.pop();
-			pr('Looking at ' + top.string);
-
-			if (top.parent === undefined) {
-				top.chooseParent();
-			}
-			pr('Top Parent: ' + top.parent);
-			pi();
-			if (ctx.isPossibleMatch(top.parent)) {
-				pr('it is a possible match, adding to upStack');
-				upStack.push(top);
-			} else {
-				// the need exists to group the top node in something that can hold the bottom node
-				pr('This never shows up in the top, time to pull down');
-				downStack.push(top);
-				var downPat = upStack.pop();
-
-				ctx = upStack[upStack.length-1];
-				pr(ctx.id);
-				pr(downPat.parent);
-				if (downPat.parent === undefined) {
-					if (downPat.parents.length > 0) {
-						downPat.chooseParent();
-					} else {
-
-					}
-				}
-				if (ctx.id === downPat.parent) {
-					pr('melding ' + downPat.string + ' up to ' + ctx.string);
-					ctx.add(downPat);
-				} else {
-					pr('adding parent above');
-					// downStack.push(downPat);
-					console.log(downPat);
-					var newPO = this.getPO(downPat.parent);
-					newPO.add(downPat);
-					upStack.push(newPO);
-				}
-			}
-			pd();
-		}
-	}
-	drawGouping(us, ds) {
-		var txt = ''
-		if (us.length < 5) {
-			for (var i = 0; i < us.length; i++) {
-				txt += us[i].string + '\n';
-			}
-		} else {
-			txt += '...\n';
-			for (var i = us.length-4; i < us.length; i++) {
-				txt += us[i].string + '\n';
-			}
-		}
-		txt += '--------------------------------\n';
-		if (ds.length < 5) {
-			for (var i = ds.length-1; i >= 0; i--) {
-				txt += ds[i].string + '\n';
-			}
-		} else {
-			for (var i = ds.length-1; i >= ds.length-4; i--) {
-				txt += ds[i].string + '\n';
-			}
-			txt += '...\n';
-		}
-		pr(txt);
-	}
-	group2(txt, context) {
-		var upStack = [];
-		var downStack = [];
-		for (var c of txt) {
-			downStack.unshift(c);
-		}
-		while (downStack.length > 0) {
-			var top = downStack.pop();
-			if (typeof top === 'string') {
-				// handle a literal
-				pr('handling ' + top);pi();
-				var down = undefined;
-				var upCon = context;
-				if (upStack.length > 0) {
-					upCon = upStack[upStack.length-1].id;
-					down = upStack[upStack.length-1].down;
-				}
-				if (down === undefined) {
-					pr('need to make a new upstack');
-					var choices = [];
-					for (var i of this.patterns) {
-						if (i.allParents.has(upCon) && i.isLiteral && i.contains(top)) {
-							choices.push(i.id);
-						}
-					}
-					pr('choices: ' + choices);
-					var newPO = new PatternObject(choices, this);
-					newPO.add(top);
-					upStack.push(newPO);
-				} else {
-					console.log(down);
-				}
-			} else {
-				// handle a pattern object
-				pr('handling ' + this.get(top.id));pi();
-			}
-			pd();
-			pr(upStack);
-		}
-	}
 	group(txt, context) {
-		// find id of the context
-		for (var i of this.patterns) {
-			if (i instanceof Named && i.name === context) {
-				context = i.id;
-				break;
-			}
-		}
-		if (typeof context === 'string') {
-			throw Error('"' + context + '" is an invalid context name');
-		}
-		context = pl.patterns[context];
-		pr(context.firstPatterns);
-
-		var namedS = [new NamedGrouper(context.id)];
-		var patternS = [new PatternGrouper(context.id, this)];
-		var pathS = [];
-
-		// make the buffer
-		var buff = [];
-		for (var c of txt) {
-			buff.unshift(c);
-		}
-
-		var n = 0;
-		while (true && n < 100) {
-			var top = buff.pop();
-			if (typeof top === 'string') {
-				pr('Looking at char ' + top);pi();
-
-				// look at the options on top
-				var topPattern = patternS[patternS.length-1];
-				if (topPattern.isMatch(top)) {
-					pr('its a match! so do something...');
-				} else if (topPattern.isPossibleMatch(top)) {
-					pr('its a possible match');
-					// bring the stack down
-					var down = topPattern.down;
-					while (down !== undefined && down.length === 1) {
-						pr(this.patterns[down[0]].string);
-						topPattern.index++;
-						topPattern = new PatternGrouper(down[0], this);
-						if (topPattern.pattern instanceof Named) {
-							var newgrouper = new NamedGrouper(topPattern.id);
-							namedS[namedS.length-1].add(newgrouper);
-							namedS.push(newgrouper);
-						}
-						if (topPattern.isMatch(top)) {
-							pr('A match has been found!');
-							namedS[namedS.length-1].add(top);
-							break;
-						}
-						patternS.push(topPattern);
-						down = topPattern.down;
-					}
-					if (down.length > 1) {
-						pr('hit an or, need to bring up the bottom');
-
-					}
-				} else {
-					pr('not a possible match');
-				}
-				pd();
-			}
-			if (n === 100) {
-				throw Error('My max call exceeded (increase n or fix the goddam issue');
-			}
-			n++;
-		}
-
-		// for (var c of txt) {
-		// 	pr('Looking at "' + c + '"');pi();
-		// 	for (var i of context.firstPatterns) {
-		// 		i = this.patterns[i];
-		// 		if (i instanceof Literal && i.char === c) {
-		// 			pr('possible: ' + i.string);
-		// 		} else if (i instanceof Range && i.contains(c)) {
-		// 			pr('possible: ' + i.string);
-		// 		}
-		// 	}
-		// 	pd();
-		// }
+		var grouper = new Grouper(this, context);
+		grouper.group(txt);
 	}
 }
 

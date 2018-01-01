@@ -99,11 +99,12 @@ class Grouper {
 				var grandparent = this.grouper.grandparent;
 				var parentUpgrade = upNode.parents[this.index];
 
-				if (parentUpgrade[1] !== 0) {
+				var testPO = this.grouper.pl.getPO(parentUpgrade[0]);
+
+				// make sure the index is <= pat.firstSolidIndex
+				if (parentUpgrade[1] > testPO.pattern.firstSolidIndex) {
 					return false;
 				}
-
-				var testPO = this.grouper.pl.getPO(parentUpgrade[0]);
 
 				return grandparent.isBelow(testPO);
 			},
@@ -114,6 +115,9 @@ class Grouper {
 				var parentUpgrade = upNode.parents[this.index];
 
 				var testPO = this.grouper.pl.getPO(parentUpgrade[0]);
+				for (var i = 0; i < parentUpgrade[1]; i++) {
+					testPO.skip();
+				}
 				testPO.add(upNode);
 
 				this.grouper.upStack.pop();
@@ -265,10 +269,13 @@ class Grouper {
 				if (option.canDo()) {
 					option.Do();
 					this.moves.push([0, 0]);
-					if (debug) pr(option.name);
+					if (debug) {
+						pr(option.name);
+						pi();this.disp();pd();
+					}
 				} else {
 					// go to the next move
-					if (debug) pr('Going to next move');
+					// if (debug) pr('Going to next move');
 					++move[1];
 				}
 			} else {
@@ -279,16 +286,19 @@ class Grouper {
 					} catch(err) {
 						throw Error('Out of moves after ' + i + ' iterations.');
 					}
-					if (debug) pr('Undo: ' + option.name);
+					if (debug) {
+						pr('Undo');
+						pi();this.disp();pd();
+					}
 				} else {
 					this.moves[this.moves.length-1] = [move[0]+1, 0];
-					if (debug) pr('Going to next option');
+					// if (debug) pr('Going to next option');
 				}
 			}
 
 			++i;
 
-			if (debug) {pi();this.disp();pd();}
+			// if (debug) {pi();this.disp();pd();}
 		}
 		this.finished = true;
 		pr('It\'s done with ' + i + ' iterations and ' + this.moves.length + ' moves.');

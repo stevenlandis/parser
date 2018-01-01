@@ -165,6 +165,9 @@ class PatternPO extends PO{
 		for (var i of this.data) {
 			res += i.result;
 		}
+		if (this.pattern.name === '') {
+			return res;
+		}
 		return '[' + res + ']';
 	}
 	isMatch(thing) {
