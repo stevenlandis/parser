@@ -14,6 +14,9 @@ class PatternList {
 		this.setLastPatterns();
 		this.setNamed();
 		this.setUps();
+		this.setNext();
+		this.setNextLiterals();
+		this.setUpNexts();
 	}
 	Literal(char) {
 		var n = new Literal(char, this.ID, this);
@@ -87,6 +90,9 @@ class PatternList {
 		this.patterns[id] = n;
 		return id;
 	}
+	Result(context) {
+		return new Result(context, this);
+	}
 	Reserve() {
 		this.patterns.push(undefined);
 		return this.ID++;
@@ -100,6 +106,109 @@ class PatternList {
 			list.push(this.Literal(c));
 		}
 		return this.List(list);
+	}
+	setNext() {
+		for (var pat of this.patterns) {
+			var stack = [];
+			var pastUps = [];
+			for (var i of pat.ups) {
+				stack.push(i);
+				pastUps.push(i);
+			}
+
+			while (stack.length !== 0) {
+				var topUp = stack.pop();
+				var topPat = this.get(topUp[0]);
+				var topIndex = topUp[1];
+
+				var followers = topPat.following(topIndex);
+				// add all the following nodes to nextPatterns
+				pat.nextPatterns.combine(followers);
+
+				// also add the followers to all the last nodes
+				for (var i of pat.lastPatterns) {
+					var p2 = this.get(i);
+					p2.nextPatterns.combine(followers);
+				}
+
+				if (topPat.isEnd(topIndex)) {
+					// now look into the other ups
+					for (var i of topPat.ups) {
+						// do a quick search of pastUps
+						var found = false;
+						for (var j of pastUps) {
+							if (topUp[0] === j[0] && topUp[1] === j[1]) {
+								found = true;
+								break;
+							}
+						}
+						if (!found) {
+							// this is a new up
+							stack.push(topUp);
+							pastUps.push(topUp);
+						}
+					}
+				}
+			}
+		}
+	}
+	setUpNexts() {
+		for (var pat of this.patterns) {
+			// pr('Setting pattern: ' + pat.string);
+			for (var up of pat.ups) {
+				// pi();
+				// pr('Setting up [' + up + ']');
+				var nexts = new Set();
+				var stack = [up];
+				var past = [up];
+				while (stack.length !== 0) {
+					// pi();
+					var topUp = stack.pop();
+					var topPat = this.get(topUp[0]);
+					var topIndex = topUp[1];
+
+					// pr('Trying ' + topUp);
+
+					var followers = topPat.following(topIndex);
+
+					nexts.combine(followers);
+
+					if (topPat.isEnd(topIndex)) {
+						// pr('end');
+						for (var i of topPat.ups) {
+							// pr('Looking for ' + i);
+							var found = false;
+							for (var j of past) {
+								if (i[0] === j[0] && i[1] === j[1]) {
+									found = true;
+									break;
+								}
+							}
+							if (!found) {
+								stack.push(i);
+								past.push(i);
+							}
+						}
+					}
+					// pd();
+				}
+				if (pat.nextUpPatterns[up[0]] === undefined) {
+					pat.nextUpPatterns[up[0]] = [];
+				}
+				pat.nextUpPatterns[up[0]][up[1]] = nexts;
+				// pd();
+			}
+		}
+	}
+	setNextLiterals() {
+		for (var p1 of this.patterns) {
+			for (var i of p1.nextPatterns) {
+				var p2 = this.get(i);
+				if (p2.isLiteral) {
+					p1.nextLiteralPatterns.add(p2.id);
+				}
+			}
+		}
 	}
 	setParents() {
 		// loop through all the patterns
@@ -228,6 +337,9 @@ class PatternList {
 		}
 		return new PatternPO(this, content);
 	}
+	getResultPO(context) {
+		return new ResultPO(this, context);
+	}
 	disp() {
 		var txt = '';
 		for (var p of this.patterns) {
@@ -266,6 +378,16 @@ class PatternList {
 				txt += ' ' + i;
 			}
 
+			txt += '\n    nexts:';
+			for (var i of p.nextPatterns) {
+				txt += ' ' + i;
+			}
+
+			txt += '\n    next literals:';
+			for (var i of p.nextLiteralPatterns) {
+				txt += ' ' + i;
+			}
+
 			// txt += '\n    lasts:';
 			// for (var i of p.lastPatterns) {
 			// 	txt += ' ' + i;
@@ -281,6 +403,7 @@ class PatternList {
 			}
 
 			txt += '\n    min size: ' + p.minSize;
+			txt += '\n    max size: ' + p.maxSize;
 			txt += '\n    first solid index: ' + p.firstSolidIndex;
 		}
 		txt += '\n\n Literals:';
@@ -303,6 +426,7 @@ class PatternList {
 	group(txt, context) {
 		var grouper = new Grouper(this, context);
 		grouper.group(txt);
+		return grouper;
 	}
 }
 

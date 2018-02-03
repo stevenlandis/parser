@@ -263,20 +263,6 @@ class Structure {
 	}
 }
 
-// class Or {
-// 	constructor(args) {
-// 		this.type = 'or';
-// 		this.arguments = args;
-// 	}
-// }
-
-// class Repeat {
-// 	constructor(pattern) {
-// 		this.type = 'repeat';
-// 		this.pattern = pattern;
-// 	}
-// }
-
 function nodeEquals(a, b) {
 	if (a.type !== b.type) {
 		return false;
@@ -306,66 +292,3 @@ function equals(a, b) {
 	}
 	return nodeEquals(a, b);
 }
-
-// function isRequirementOf(thing, structure) {
-// 	if (typeof thing === 'string') {
-// 		var letter = thing;
-// 		for (var k = 0; k < structure.requirements.list.length; k++) {
-// 			var rec = structure.requirements.list[k];
-// 			if (rec.type === "range") {
-// 				if (rec.contains(letter)) {
-// 					return true;
-// 				}
-// 			} else if (rec.type === 'literal') {
-// 				if (rec.char === letter) {
-// 					return true;
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return false;
-// }
-
-// function getRequirementList(thing, structures) {
-// 	var res = [];
-// 	if (typeof thing === 'string') {
-// 		for (var i = 0; i < structures.length; i++) {
-// 			if (isRequirementOf(thing, structures[i])) {
-// 				res.push(structures[i]);
-// 			}
-// 		}
-// 	}
-// 	return res;
-// }
-
-// function deepLinkStructures(structureList) {
-// 	for (var i = 0; i < structureList.length; i++) {
-// 		//pr("Structure: "+structureList[i].name);pi();
-// 		var stack = [structureList[i].pattern];
-// 		while (stack.length !== 0) {
-// 			var pattern = stack.pop();
-// 			for (var j = 0; j < pattern.length; j++) {
-// 				//pr("Looking at "+pattern[j].type);
-// 				var type = pattern[j].type;
-// 				//pi();
-// 				if (type === 'structure link') {
-// 					var name = pattern[j].to;
-// 					//pr("looking for structure named "+name);
-// 					for (var k = 0; k < structureList.length; k++) {
-// 						if (name === structureList[k].name) {
-// 							pattern[j] = structureList[k];
-// 						}
-// 					}
-// 				} else if (type === 'repeat') {
-// 					stack.push(pattern[j].pattern);
-// 				} else if (type === 'or') {
-// 					for (var k = 0; k < pattern[j].arguments.length; k++) {
-// 						stack.push(pattern[j].arguments[k]);
-// 					}
-// 				}
-// 				//pd();
-// 			}
-// 		}
-// 		//pd();
-// 	}
-// }

@@ -9,8 +9,14 @@ class Pattern {
 		this.firstPatterns = new Set();
 		this.firstParents = new Set();
 		this.lastPatterns = new Set();
+		this.nextPatterns = new Set();
+		this.nextLiteralPatterns = new Set();
+		this.nextUpPatterns = [];
 		this.ups = [];
 		this.name = '';
+	}
+	get optional() {
+		return this.minSize === 0;
 	}
 }
 
@@ -34,6 +40,42 @@ class List extends Pattern {
 	}
 	isComplete(index) {
 		return index >= this.endIndex;
+	}
+	following(index) {
+		var res = new Set();
+
+		// loop through all elements following index
+		for (var i = index+1; i < this.list.length; i++) {
+
+			// get the pattern at the list index
+			var pat = this.pl.get(this.list[i]);
+
+			// add all the first patterns
+			res.combine(pat.firstPatterns);
+			res.add(pat.id);
+
+			// if the pattern is not optional, end it
+			if (pat.minSize !== 0) {
+				break;
+			}
+		}
+		return res;
+	}
+	isEnd(index) {
+		// loop through all elements following index
+		for (var i = index+1; i < this.list.length; i++) {
+
+			// get the pattern at the list index
+			var pat = this.pl.get(this.list[i]);
+
+			// if the pattern is not optional, return false
+			if (pat.minSize !== 0) {
+				return false;
+			}
+		}
+
+		// if the loop can finish:
+		return true;
 	}
 	get childs() {
 		var res = [];
@@ -178,6 +220,20 @@ class List extends Pattern {
 		}
 		return this._minSize;
 	}
+	get maxSize() {
+		if (this._maxSize === undefined) {
+			this._maxSize = 0;
+			for (var i of this.list) {
+				var size = this.pl.get(i).maxSize;
+				if (size === -1) {
+					this._maxSize = -1;
+					return -1;
+				}
+				this._maxSize += size;
+			}
+		}
+		return this._maxSize;
+	}
 	equals(n) {
 		if (this.constructor !== n.constructor) {
 			return false;
@@ -216,6 +272,15 @@ class Or extends Pattern {
 	}
 	isComplete(index) {
 		return this.isFilled(index);
+	}
+	following(index) {
+		// the or pattern has no internal following patterns
+		// so return empty set
+		return new Set();
+	}
+	isEnd(index) {
+		// the or pattern only holds one pattern, so always true
+		return true;
 	}
 	isBelow(id, index) {
 		if (this.isDirectlyBelow(id, index)) {
@@ -334,6 +399,20 @@ class Or extends Pattern {
 		}
 		return this._minSize;
 	}
+	get maxSize() {
+		if (this._maxSize === undefined) {
+			this._maxSize = 0;
+			for (var i of this.patterns) {
+				var size = this.pl.get(i).maxSize;
+				if (size === -1) {
+					this._maxSize = -1;
+					return -1;
+				}
+				this._maxSize = Math.max(this._maxSize, size);
+			}
+		}
+		return this._maxSize;
+	}
 	equals(n) {
 		if (this.constructor !== n.constructor) {
 			return false;
@@ -357,6 +436,7 @@ class Repeat extends Pattern {
 		this.children.add(pattern);
 		this.isLiteral = false;
 		this.minSize = 0;
+		this.maxSize = -1;
 
 		this.defaultFilled = false;
 		this.defaultComplete = true;
@@ -369,6 +449,19 @@ class Repeat extends Pattern {
 		return false;
 	}
 	isComplete(index) {
+		return true;
+	}
+	following(index) {
+		// the possible followers are the firsts of pattern
+		var pat = this.pl.get(this.pattern);
+
+		var res = new Set(pat.firstPatterns);
+		res.add(pat.id);
+
+		return res;
+	}
+	isEnd(index) {
+		// as the following patterns are all optional, true
 		return true;
 	}
 	isBelow(id, index) {
@@ -444,6 +537,7 @@ class Literal extends Pattern {
 		this.char = char;
 		this.isLiteral = true;
 		this.minSize = 1;
+		this.maxSize = 1;
 
 		this.defaultFilled = false;
 		this.defaultComplete = false;
@@ -454,6 +548,13 @@ class Literal extends Pattern {
 	}
 	contains(char) {
 		return this.char === char;
+	}
+	following(index) {
+		// nothing
+		return new Set();
+	}
+	isEnd(index) {
+		return true;
 	}
 	isFilled(index) {
 		if (index === 0) {
@@ -543,6 +644,7 @@ class Range extends Pattern {
 		this.ranges = ranges;
 		this.isLiteral = true;
 		this.minSize = 1;
+		this.maxSize = 1;
 
 		this.defaultFilled = false;
 		this.defaultComplete = false;
@@ -567,6 +669,13 @@ class Range extends Pattern {
 			}
 		}
 		return false;
+	}
+	following(index) {
+		// nothing
+		return new Set();
+	}
+	isEnd(index) {
+		return true;
 	}
 	isBelow() {
 		return false;
@@ -631,6 +740,51 @@ Range.rangeEquals = function(r1, r2) {
 		}
 	}
 	return true;
+}
+
+class Result {
+	constructor(context, pl) {
+		this.pl = pl;
+		this.context = context;
+		this.isLiteral = false;
+
+		var ctxPat = this.pl.get(this.context);
+		this.minSize = ctxPat.minSize;
+		this.maxSize = ctxPat.maxSize;
+	}
+	isFilled(index) {
+		return index > 0;
+	}
+	isComplete(index) {
+		return this.isFilled(index);
+	}
+	isDirectlyBelow(id, index) {
+		if (index !== 0) {
+			return false;
+		}
+		return this.context === id;
+	}
+	isBelow(id, index) {
+		if (this.isDirectlyBelow(id, index)) {
+			return true;
+		}
+
+		if (index !== 0) {
+			return false;
+		}
+
+		var fps = this.pl.get(this.context);
+		return fps.has(id);
+	}
+	canSkip(index) {
+		if (index !== 0) {
+			return false;
+		}
+		return this.minSize === 0;
+	}
+	get string() {
+		return 'Returner';
+	}
 }
 
 

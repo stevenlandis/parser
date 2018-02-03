@@ -29,3 +29,17 @@ function assert(a) {
 		throw Error('Assert Failed');
 	}
 }
+
+Set.prototype.union = function(b) {
+	var res = new Set(this);
+	for (var elem of b) {
+		res.add(elem);
+	}
+	return res;
+};
+
+Set.prototype.combine = function(setB) {
+	for (var elem of setB) {
+		this.add(elem);
+	}
+};

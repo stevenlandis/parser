@@ -23,7 +23,6 @@ class Grouper {
 				}
 				var upNode = this.grouper.upNode;
 				var downNode = this.grouper.downNode;
-
 				return upNode.isBelow(downNode);
 			},
 
@@ -51,6 +50,14 @@ class Grouper {
 			function() {
 				var grandparent = this.grouper.grandparent;
 				var upNode = this.grouper.upNode;
+
+				if (this.grouper.moves.length >= 2) {
+					// make sure the last move done can preceed the current move
+					var lastMove = this.grouper.moves[this.grouper.moves.length-2][0];
+					if (lastMove === 3) {
+						return false;
+					}
+				}
 
 				return upNode.complete && grandparent.isDirectlyBelow(upNode);
 			},
@@ -96,6 +103,10 @@ class Grouper {
 					return false;
 				}
 
+				if (this.grouper.upStack.length === 1) {
+					return false;
+				}
+
 				var grandparent = this.grouper.grandparent;
 				var parentUpgrade = upNode.parents[this.index];
 
@@ -104,6 +115,26 @@ class Grouper {
 				// make sure the index is <= pat.firstSolidIndex
 				if (parentUpgrade[1] > testPO.pattern.firstSolidIndex) {
 					return false;
+				}
+
+				if (this.grouper.moves.length >= 2) {
+					// make sure the last move done can preceed the current move
+					var lastMove = this.grouper.moves[this.grouper.moves.length-2][0];
+					if (lastMove === 3 || lastMove === 4) {
+						return false;
+					}
+				}
+				
+				// make sure the upgrade will actually work
+				if (this.grouper.downStack.length >= 1) {
+					var po1 = upNode;
+					var up = upNode.parents[this.index];
+					var po2 = this.grouper.downNode;
+
+
+					if (!po1.preceedsUp(up, po2)) {
+						return false;
+					}
 				}
 
 				return grandparent.isBelow(testPO);
@@ -144,6 +175,14 @@ class Grouper {
 
 				var downNode = this.grouper.downNode;
 
+				return downNode.canChoose(this.index + 1);
+			},
+
+			// can do
+			function() {
+
+				var downNode = this.grouper.downNode;
+
 				if (downNode.constructor !== LiteralPO) {
 					return false;
 				}
@@ -152,11 +191,23 @@ class Grouper {
 					return false;
 				}
 
-				return downNode.canChoose(this.index + 1);
-			},
+				if (this.grouper.moves.length >= 2) {
+					// make sure the last move done can preceed the current move
+					var lastMove = this.grouper.moves[this.grouper.moves.length-2][0];
+					if (lastMove === 4) {
+						return false;
+					}
+				}
 
-			// can do
-			function() {
+				if (this.grouper.downStack.length >= 2) {
+					var po1 = this.grouper.downStack[this.grouper.downStack.length-1];
+					var po2 = this.grouper.downStack[this.grouper.downStack.length-2];
+
+					if (!po1.preceeds(po2)) {
+						return false;
+					}
+				}
+
 				return true;
 			},
 
@@ -192,6 +243,20 @@ class Grouper {
 					return false;
 				}
 
+				if (this.grouper.downStack.length !== 0 && upNode.pattern.constructor === List) {
+					var list = upNode.pattern.list;
+					var i = upNode.i;
+					if (i < list.length) {
+						// pr(list[i]);
+
+						var po = this.grouper.pl.getPO(list[i]);
+
+						if (!po.preceeds(this.grouper.downNode)) {
+							return false;
+						}
+					}
+				}
+
 				return upNode.canSkip();
 			},
 
@@ -215,28 +280,35 @@ class Grouper {
 		var txt = ''
 		if (us.length < 5) {
 			for (var i = 0; i < us.length; i++) {
-				txt += us[i].string + '\n';
+				txt += us[i].string2 + '\n';
 			}
 		} else {
 			txt += '...\n';
 			for (var i = us.length-4; i < us.length; i++) {
-				txt += us[i].string + '\n';
+				txt += us[i].string2 + '\n';
 			}
 		}
 		txt += '--------------------------------\n';
 		if (ds.length < 5) {
 			for (var i = ds.length-1; i >= 0; i--) {
-				txt += ds[i].string + '\n';
+				txt += ds[i].string2 + '\n';
 			}
 		} else {
 			for (var i = ds.length-1; i >= ds.length-4; i--) {
-				txt += ds[i].string + '\n';
+				txt += ds[i].string2 + '\n';
 			}
 			txt += '...';
 		}
 		txt += '\n\nMoves: ';
-		for (var i of this.moves) {
-			txt += '[' + i + '] ';
+		if (this.moves.length <= 10) {
+			for (var i of this.moves) {
+				txt += '[' + i + '] ';
+			}
+		} else {
+			txt += '...'
+			for (var i = this.moves.length-10; i < this.moves.length; i++) {
+				txt += '[' + this.moves[i] + ']';
+			}
 		}
 		pr(txt);
 	}
@@ -252,12 +324,13 @@ class Grouper {
 		}
 
 		this.moves = [[0, 0]];
-		pr('Grouping "' + this.txt + '"');
+		pr('Grouping:\n"' + this.txt + '"');
 
 		if (debug) {pi();this.disp();pd();}
 
-		var n = 500;
+		var n = 700;
 		var i = 0;
+		var nMoves = 0;
 		while (this.downStack.length > 0 || this.upStack.length !== 1 || !this.upStack[0].complete) {
 			// if (n <= 0) {pr('maximum iterations exceeded');break;}--n;
 
@@ -268,9 +341,10 @@ class Grouper {
 			if (option.isValidIndex()) {
 				if (option.canDo()) {
 					option.Do();
+					nMoves++;
 					this.moves.push([0, 0]);
 					if (debug) {
-						pr(option.name);
+						pr(nMoves + ': ' + option.name);
 						pi();this.disp();pd();
 					}
 				} else {
@@ -284,7 +358,8 @@ class Grouper {
 					try {
 						this.backtrack();
 					} catch(err) {
-						throw Error('Out of moves after ' + i + ' iterations.');
+						return;
+						// throw Error('Out of moves after ' + i + ' iterations.');
 					}
 					if (debug) {
 						pr('Undo');
