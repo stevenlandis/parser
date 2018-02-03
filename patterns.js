@@ -701,50 +701,6 @@ class Range extends Pattern {
 	}
 }
 
-class Result {
-	constructor(context, pl) {
-		this.pl = pl;
-		this.context = context;
-		this.isLiteral = false;
-
-		var ctxPat = this.pl.get(this.context);
-		this.minSize = ctxPat.minSize;
-		this.maxSize = ctxPat.maxSize;
-	}
-	isFilled(index) {
-		return index > 0;
-	}
-	isComplete(index) {
-		return this.isFilled(index);
-	}
-	isDirectlyBelow(id, index) {
-		if (index !== 0) {
-			return false;
-		}
-		return this.context === id;
-	}
-	isBelow(id, index) {
-		if (this.isDirectlyBelow(id, index)) {
-			return true;
-		}
-
-		if (index !== 0) {
-			return false;
-		}
-
-		var fps = this.pl.get(this.context);
-		return fps.has(id);
-	}
-	canSkip(index) {
-		if (index !== 0) {
-			return false;
-		}
-		return this.minSize === 0;
-	}
-	get string() {
-		return 'Returner';
-	}
-}
 
 
 
