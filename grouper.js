@@ -5,6 +5,7 @@ class Grouper {
 		this.moves = [];
 		this.options = [];
 		this.finished = false;
+		this.info = '';
 
 		// add the options
 		// push up
@@ -324,13 +325,14 @@ class Grouper {
 		}
 
 		this.moves = [[0, 0]];
-		pr('Grouping:\n"' + this.txt + '"');
+		// pr('Grouping:\n"' + this.txt + '"');
 
 		if (debug) {pi();this.disp();pd();}
 
 		var n = 700;
 		var i = 0;
 		var nMoves = 0;
+		var t0 = performance.now();
 		while (this.downStack.length > 0 || this.upStack.length !== 1 || !this.upStack[0].complete) {
 			// if (n <= 0) {pr('maximum iterations exceeded');break;}--n;
 
@@ -358,6 +360,7 @@ class Grouper {
 					try {
 						this.backtrack();
 					} catch(err) {
+						this.time = Math.ceil(1000*(performance.now() - t0))/1000;
 						return;
 						// throw Error('Out of moves after ' + i + ' iterations.');
 					}
@@ -376,8 +379,12 @@ class Grouper {
 			// if (debug) {pi();this.disp();pd();}
 		}
 		this.finished = true;
-		pr('It\'s done with ' + i + ' iterations and ' + this.moves.length + ' moves.');
-		pr(this.string);
+
+		var time = Math.ceil(1000*(performance.now() - t0))/1000;
+		this.time = time;
+		this.info = 'Grouped with ' + i + ' iterations and ' + this.moves.length + ' moves in ' + time + ' ms.';
+		// pr('It\'s done with ' + i + ' iterations and ' + this.moves.length + ' moves.');
+		// pr(this.string);
 		// pr(this.upStack[0]);
 	}
 	backtrack() {
@@ -543,86 +550,6 @@ class Grouper {
 			res += ']';
 		}
 		return res;
-	}
-	undo() {
-		var downNode = this.downStack[this.downStack.length-1];
-		if (this.moves.length === 0) {
-			if (downNode.constructor === LiteralPO && downNode.canCycle) {
-				downNode.chooseChoice();
-				for (var i = 0; i < this.downStack.length-1; i++) {
-					var pat = this.downStack[i];
-
-					if (pat.constructor === LiteralPO) {
-						// pr('Resetting ' + pat.string);
-						pat.resetChoice();
-					}
-				}
-				this.moves.push([0]);
-				return;
-			} else {
-				throw Error('Out of moves to undo');
-			}
-		}
-
-		
-		var upNode = this.upStack[this.upStack.length-1];
-		var move = this.moves[this.moves.length-1];
-
-		// pr('Undoing ' + move);
-		switch(move[0]) {
-			case 0:
-				// undo a push up
-				if (this.upStack.length < 1) {
-					throw Error('There has to be at least one PO in upstack');
-				}
-				this.downStack.push(this.upStack.pop());
-				this.moves.pop();
-				this.moves.push([1]);
-				break;
-			case 1:
-				// undo a collapse
-				var pat = upNode.pop();
-				this.upStack.push(pat);
-
-				this.moves.pop();
-				this.moves.push([2, 0]);
-				break;
-			case 2:
-				// undo an upgrade
-				var pat = this.upStack.pop();
-				this.upStack.pop();
-				this.upStack.push(pat);
-				// this.upStack.pop();
-				// this.upStack.push(pat);
-				upNode = this.upStack[this.upStack.length-1];
-
-				move[1]++;
-
-				// if (move[1] >= upNode.parents.length && downNode.constructor === LiteralPO && downNode.canCycle) {
-				// 	// pr('SUPER UPGRADE');
-				// 	downNode.chooseChoice();
-				// 	for (var i = 0; i < this.downStack.length-1; i++) {
-				// 		var pat = this.downStack[i];
-
-				// 		if (pat.constructor === LiteralPO) {
-				// 			// pr('Resetting ' + pat.string);
-				// 			pat.resetChoice();
-				// 		}
-				// 	}
-				// 	this.moves.pop();
-				// 	this.moves.push([0]);
-				// }
-				break;
-			case 3:
-				// undo a choose
-				downNode.unChooseChoice();
-				this.moves.pop();
-				this.undo();
-
-				break;
-			default:
-				throw Error('Unknown undo move type: ' + move[0]);
-		}
 	}
 	get upNode() {
 		return this.upStack[this.upStack.length-1];

@@ -131,7 +131,8 @@ tests.mathPrecedence = function() {
 	pl.init();
 	// pl.disp();
 
-	pl.group('1 ^ 2 ^      3', expression);
+	var g = pl.group('1+2*3^4*5+6', expression);
+	tests.dispInfo(g);
 }
 
 tests.addition = function() {
@@ -206,7 +207,8 @@ tests.startParens = function() {
 	pl.init();
 	// pl.disp();
 
-	pl.group('(((((stuff', thing);
+	var g = pl.group('(((((stuff', thing);
+	tests.dispInfo(g);
 }
 
 tests.parens = function() {
@@ -229,7 +231,8 @@ tests.parens = function() {
 	pl.init();
 	// pl.disp();
 
-	pl.group('(((((s)))))', thing);
+	var g = pl.group('(((((s)))))', thing);
+	tests.dispInfo(g);
 }
 
 tests.javascript = function() {
@@ -367,9 +370,12 @@ tests.javascript = function() {
 	pl.init();
 	// pl.disp();
 
-	pl.group('for (var i = 0; i < 10;i++) {\n\tk++;\n}\ntiberious++;', contentList);
+	var g = pl.group('for (var i = 0; i < 10;i++) {\n\tk++;\n}\ntiberious++;', contentList);
+	tests.dispInfo(g);
+
 	// pr(pl);
-	pl.group('for (var i = 0; i < 10; i++) {\n\tvar j = 2;\n\tvar k = 5;\n\tk = 17;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n}', contentList);
+	g = pl.group('for (var i = 0; i < 10; i++) {\n\tvar j = 2;\n\tvar k = 5;\n\tk = 17;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n\tk++;\n}', contentList);
+	tests.dispInfo(g);
 }
 
 tests.twoBacktrackList = function() {
@@ -386,7 +392,8 @@ tests.twoBacktrackList = function() {
 	pl.init();
 	// pl.disp();
 
-	pl.group('aaaaaaaaa', list);
+	var g = pl.group('aaaaaaaaa', list);
+	tests.dispInfo(g);
 }
 
 tests.threeBacktrackList = function() {
@@ -402,7 +409,8 @@ tests.threeBacktrackList = function() {
 	pl.init();
 	// pl.disp();
 
-	var res = pl.group('aaaaaaaaaaaaaaaaaaa', list);
+	var g = pl.group('aaaaaaaaaaaaaaaaaaa', list);
+	tests.dispInfo(g);
 }
 
 tests.simpleJavascript = function() {
@@ -453,8 +461,22 @@ tests.simpleJavascript = function() {
 	pl.init();
 	// pl.disp();
 
-	pl.group('var  i = 12345;', expression);
+	var g = pl.group('var  i = 12345;', expression);
+	tests.dispInfo(g);
 }
+
+tests.dispInfo = function(g) {
+	pr('Grouping "' + g.txt + '"');
+
+	pi();
+		if (g.finished) {
+			pr(g.info);
+			pr(g.string);
+		} else {
+			pr("Didn't finish in " + g.time + ' ms');
+		}
+	pd();
+};
 
 tests.backtrackList();
 tests.mathPrecedence();

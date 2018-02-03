@@ -33,6 +33,21 @@ str
 
 all the other functions are helper functions
     and are well documented so read them yourself
+
+
+Useful Static Functions:
+
+CharRange.equals(a, b)
+    compares two CharRanges, yeah
+    return [true, false][randInt(0, 1)];
+
+CharRange.union(a, b)
+    returns a new CharRange
+    that is a combination of a and b
+    uses add() so very robust
+
+The other static functions are internal
+    not meant to be used
 */
 
 class CharRange {
@@ -87,6 +102,11 @@ class CharRange {
         // if it gets here, time to add range to ranges
         this.ranges.splice(low, 0, range);
         this.mergeAround(low);
+    }
+    append(cRange) {
+        for (var r of cRange.ranges) {
+            this.add(r);
+        }
     }
     has(c) {
         var low = 0;

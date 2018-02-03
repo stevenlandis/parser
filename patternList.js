@@ -18,6 +18,7 @@ class PatternList {
 		this.setNextLiterals();
 		this.setUpNexts();
 	}
+
 	Literal(char) {
 		var n = new Literal(char, this.ID, this);
 		var searchRes = this.search(n);
@@ -97,6 +98,7 @@ class PatternList {
 		this.patterns.push(undefined);
 		return this.ID++;
 	}
+
 	name(id, name) {
 		this.patterns[id].name = name;
 	}
@@ -107,6 +109,7 @@ class PatternList {
 		}
 		return this.List(list);
 	}
+
 	setNext() {
 		for (var pat of this.patterns) {
 			var stack = [];
@@ -206,6 +209,7 @@ class PatternList {
 				var p2 = this.get(i);
 				if (p2.isLiteral) {
 					p1.nextLiteralPatterns.add(p2.id);
+					p1.nextLiteralRange.append(p2.range);
 				}
 			}
 		}
@@ -328,6 +332,7 @@ class PatternList {
 			}
 		}
 	}
+
 	getPO(content) {
 		if (typeof content === 'string') {
 			return new LiteralPO(this, content);

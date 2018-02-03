@@ -46,6 +46,8 @@ class PO {
 	preceeds(poB) {
 		if (poB.constructor === LiteralPO) {
 			// search all the literals
+			return this.pattern.nextLiteralRange.has(poB.char);
+
 			for (var i of this.pattern.nextLiteralPatterns) {
 				var pat = this.pl.get(i);
 				if (pat.contains(poB.char)) {
@@ -61,6 +63,7 @@ class PO {
 	preceedsUp(up, poB) {
 		if (poB.constructor === LiteralPO) {
 			// pr(this.pattern.nextUpPatterns[up[0]][up[1]]);
+			
 			for (var i of this.pattern.nextUpPatterns[up[0]][up[1]]) {
 				var pat = this.pl.get(i);
 				if (pat.isLiteral && pat.contains(poB.char)) {

@@ -11,7 +11,9 @@ class Pattern {
 		this.lastPatterns = new Set();
 		this.nextPatterns = new Set();
 		this.nextLiteralPatterns = new Set();
+		this.nextLiteralRange = new CharRange();
 		this.nextUpPatterns = [];
+		this.nextUpRanges = [];
 		this.ups = [];
 		this.name = '';
 	}
@@ -535,6 +537,7 @@ class Literal extends Pattern {
 	constructor(char, id, pl) {
 		super(id, pl);
 		this.char = char;
+		this.range = new CharRange([[char, char]]);
 		this.isLiteral = true;
 		this.minSize = 1;
 		this.maxSize = 1;
