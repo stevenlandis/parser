@@ -473,7 +473,7 @@ tests.dispInfo = function(g) {
 			pr(g.info);
 			pr(g.string);
 		} else {
-			pr("Didn't finish in " + g.time + ' ms');
+			pr(g.info);
 		}
 	pd();
 };

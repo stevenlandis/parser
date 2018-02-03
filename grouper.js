@@ -360,7 +360,8 @@ class Grouper {
 					try {
 						this.backtrack();
 					} catch(err) {
-						this.time = Math.ceil(1000*(performance.now() - t0))/1000;
+						var time = Math.ceil(1000*(performance.now() - t0))/1000;
+						this.info = "Didn't finish with " + i + ' iterations in ' + time + ' ms.';
 						return;
 						// throw Error('Out of moves after ' + i + ' iterations.');
 					}
@@ -381,7 +382,6 @@ class Grouper {
 		this.finished = true;
 
 		var time = Math.ceil(1000*(performance.now() - t0))/1000;
-		this.time = time;
 		this.info = 'Grouped with ' + i + ' iterations and ' + this.moves.length + ' moves in ' + time + ' ms.';
 		// pr('It\'s done with ' + i + ' iterations and ' + this.moves.length + ' moves.');
 		// pr(this.string);

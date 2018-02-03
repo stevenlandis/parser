@@ -199,6 +199,20 @@ class PatternList {
 					pat.nextUpPatterns[up[0]] = [];
 				}
 				pat.nextUpPatterns[up[0]][up[1]] = nexts;
+
+				// set the literal ranges as well
+				if (pat.nextUpRanges[up[0]] === undefined) {
+					pat.nextUpRanges[up[0]] = [];
+				}
+				var newRange = new CharRange();
+				for (var id of nexts) {
+					var pat2 = this.patterns[id];
+					if (pat2.isLiteral) {
+						newRange.append(pat2.range);
+					}
+				}
+				pat.nextUpRanges[up[0]][up[1]] = newRange;
+
 				// pd();
 			}
 		}
