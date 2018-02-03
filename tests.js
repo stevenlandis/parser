@@ -456,13 +456,13 @@ tests.simpleJavascript = function() {
 	pl.group('var  i = 12345;', expression);
 }
 
-// tests.backtrackList();
-// tests.mathPrecedence();
-// tests.addition();
-// tests.endParens();
-// tests.startParens();
-// tests.parens();
-// tests.javascript();
-// tests.twoBacktrackList();
-// tests.threeBacktrackList();
-// tests.simpleJavascript();
+tests.backtrackList();
+tests.mathPrecedence();
+tests.addition();
+tests.endParens();
+tests.startParens();
+tests.parens();
+tests.javascript();
+tests.twoBacktrackList();
+tests.threeBacktrackList();
+tests.simpleJavascript();

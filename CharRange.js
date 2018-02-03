@@ -40,6 +40,11 @@ class CharRange {
         // ranges is an array of ranges
         // [ ['a', 'z'], ['A', 'Z'] ]
         this.ranges = [];
+
+        if (ranges === undefined) {
+            return;
+        }
+
         for (var r of ranges) {
             this.add(r);
         }
@@ -141,7 +146,7 @@ class CharRange {
     get str() {
         var txt = '';
         for (var r of this.ranges) {
-            txt += '(\'' + r[0] + '\', \'' + r[1] + '\') ';
+            txt += '<\'' + r[0] + '\', \'' + r[1] + '\'> ';
         }
         return txt;
     }
@@ -161,9 +166,38 @@ CharRange.min = function(a, b) {
 CharRange.nextChar = function(c) {
     return String.fromCharCode(c.charCodeAt(0)+1);
 }
+CharRange.equals = function(a, b) {
+    if (a.length !== b.length) {
+        return false;
+    }
+
+    // now the lengths are the same
+    // compare the ranges
+    for (var i in a) {
+        if (
+            a[i][0] !== b[i][0] ||
+            a[i][1] !== b[i][1]
+        ) {
+            return false;
+        }
+    }
+
+    // at this point...
+    return true;
+}
+CharRange.union = function(a, b) {
+    var res = new CharRange();
+    for (var r of a.ranges) {
+        res.add(r);
+    }
+    for (var r of b.ranges) {
+        res.add(r);
+    }
+    return res;
+}
 
 // very rigorous tests...
-// var a = new CharRange([]);
+// var a = new CharRange([['a', 'b'], ['c', 'd']]);
 // a.add(['F', 'A']);
 // a.add(['A', 'F']);
 // a.add(['0', '3']);
@@ -174,3 +208,9 @@ CharRange.nextChar = function(c) {
 // a.add(['8', '8']);
 // a.add(['a', 'z']);
 // pr(a.str);
+
+// union test
+// var a = new CharRange([['a', 'b'], ['d', 'e']]);
+// var b = new CharRange([['c', 'c'], ['f', 'g']]);
+// var c = CharRange.union(a, b);
+// pr(c.str);

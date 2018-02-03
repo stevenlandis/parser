@@ -622,26 +622,8 @@ class Range extends Pattern {
 	constructor(ranges, id, pl) {
 		super(id, pl);
 
-		//sort that list based on the first char
-		for (var i = 1; i < ranges.length; i++) {
-			for (var j = ranges.length-1; j >= i; j--) {
-				if (ranges[j-1][0] > ranges[j][0]) {
-					var temp = ranges[j-1];
-					ranges[j-1] = ranges[j];
-					ranges[j] = temp;
-				}
-			}
-		}
-		for (var i = 0; i < ranges.length-1; i++) {
-			if (ranges[i+1][0] <= Range.nextChar(ranges[i][1])) {
-				if (ranges[i][1] < ranges[i+1][1]) {
-					ranges[i][1] = ranges[i+1][1]
-				}
-				ranges.splice(i+1, 1);
-				i--;
-			}
-		}
-		this.ranges = ranges;
+		this.range = new CharRange(ranges);
+
 		this.isLiteral = true;
 		this.minSize = 1;
 		this.maxSize = 1;
@@ -663,12 +645,7 @@ class Range extends Pattern {
 		return this.isFilled(index);
 	}
 	contains(char) {
-		for (var r of this.ranges) {
-			if (r[0] <= char && char <= r[1]) {
-				return true;
-			}
-		}
-		return false;
+		return this.range.has(char);
 	}
 	following(index) {
 		// nothing
@@ -687,11 +664,7 @@ class Range extends Pattern {
 		return false;
 	}
 	get string() {
-		var res = '';
-		for (var r of this.ranges) {
-			res += '<' + r + '>';
-		}
-		return res;
+		return this.range.str;
 	}
 	get first() {
 		return [];
@@ -724,22 +697,8 @@ class Range extends Pattern {
 		if (this.constructor !== n.constructor) {
 			return false;
 		}
-		return Range.rangeEquals(this.ranges, n.ranges);
+		return CharRange.equals(this.range, n.range);
 	}
-}
-Range.nextChar = function(c) {
-	return String.fromCharCode(c.charCodeAt(0)+1);
-}
-Range.rangeEquals = function(r1, r2) {
-	if (r1.length !== r2.length) {
-		return false;
-	}
-	for (var i in r1) {
-		if (r1[i][0] !== r2[i][0] || r1[i][1] !== r2[i][1]) {
-			return false;
-		}
-	}
-	return true;
 }
 
 class Result {
