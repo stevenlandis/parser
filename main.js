@@ -131,4 +131,6 @@ pl.init();
 
 // var grouper = new Grouper(pl, expression);
 
-// pl.group('var jollyworth == 583;', expression);
+// var g = pl.group('var jollyworth == 583;', expression);
+// pr(g.string);
+// pr(g.info);

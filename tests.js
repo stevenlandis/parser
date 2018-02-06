@@ -30,7 +30,9 @@ tests.backtrackList = function() {
 
 	var grouper = new Grouper(pl, list);
 
-	grouper.group('aaaaaaaaaaaa');
+	var g = pl.group('aaaaaaaaaa', list, false);
+
+	tests.dispInfo(g);
 }
 
 tests.mathPrecedence = function() {
@@ -478,13 +480,13 @@ tests.dispInfo = function(g) {
 	pd();
 };
 
-tests.backtrackList();
-tests.mathPrecedence();
-tests.addition();
-tests.endParens();
-tests.startParens();
-tests.parens();
-tests.javascript();
-tests.twoBacktrackList();
-tests.threeBacktrackList();
-tests.simpleJavascript();
+// tests.backtrackList();
+// tests.mathPrecedence();
+// tests.addition();
+// tests.endParens();
+// tests.startParens();
+// tests.parens();
+// tests.javascript();
+// tests.twoBacktrackList();
+// tests.threeBacktrackList();
+// tests.simpleJavascript();

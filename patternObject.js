@@ -62,10 +62,7 @@ class PO {
 	}
 	preceedsUp(up, poB) {
 		if (poB.constructor === LiteralPO) {
-			// pr(this.pattern.nextUpPatterns[up[0]][up[1]]);
-
 			return this.pattern.nextUpRanges[up[0]][up[1]].has(poB.char);
-			
 		} else {
 			return this.pattern.nextUpPatterns[up[0]][up[1]].has(poB.pattern.id);
 		}

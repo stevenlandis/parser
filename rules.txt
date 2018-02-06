@@ -1,0 +1,60 @@
+letter {
+	range { ['a', 'z'], ['A', 'Z'] }
+}
+
+identifier {
+	list { letter, repeat {letter} }
+}
+
+VAR {
+	'var'
+}
+
+FOR {
+	'for'
+}
+
+keywords {
+	{VAR or FOR}
+}
+
+numeral {
+	range{ ['0', '9'] }
+}
+
+number {
+	list { numeral, repeat {numeral} }
+}
+
+wsc {
+	{' ' or '\t' or '\n'}
+}
+
+rws {
+	repeat {wsc}
+}
+
+ws {
+	list { wsc, rws }
+}
+
+init {
+	list {
+		VAR,
+		ws,
+		identifier,
+		ws,
+		'=',
+		ws,
+		number,
+		';'
+	}
+}
+
+assignment {
+	list {identifier, ws, '=', ws, number, ';'}
+}
+
+expression {
+	{init or assignment}
+}

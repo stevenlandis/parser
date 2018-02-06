@@ -1,0 +1,67 @@
+var testTxt = `
+
+letter {
+	range { ['a', 'z'], ['A', 'Z'] }
+}
+
+VAR {
+	'var'
+}
+
+FOR {
+	'for'
+}
+
+keywords {
+	or{VAR, FOR}
+}
+
+numeral {
+	range{ ['0', '9'] }
+}
+
+number {
+	list { numeral, repeat {numeral} }
+}
+
+wsc {
+	or {' ', '\\t', '\\n'}
+}
+
+rws {
+	repeat {wsc}
+}
+
+ws {
+	list { wsc, rws }
+}
+
+init {
+	list {
+		VAR,
+		ws,
+		identifier,
+		ws,
+		'=',
+		ws,
+		number,
+		';'
+	}
+}
+
+assignment {
+	list {identifier, ws, '=', ws, number, ';'}
+}
+
+expression {
+	or {init, assignment}
+}
+`;
+
+// testTxt = `
+// letter {
+// 	range {['\\t', '\\n']}
+// }
+// `;
+
+testTxt = testTxt.substring(1, testTxt.length-1);

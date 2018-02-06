@@ -65,6 +65,9 @@ class CharRange {
         }
     }
     add(range) {
+        // copy range
+        range = [range[0], range[1]];
+
         // make sure the range is in the correct order
         if (range[1] < range[0]) {
             var temp = range[0];
@@ -102,6 +105,27 @@ class CharRange {
         // if it gets here, time to add range to ranges
         this.ranges.splice(low, 0, range);
         this.mergeAround(low);
+
+        // for testing, make sure the range is correct
+        // if (!this.verify()) {
+        //     throw("uh oh");
+        // }
+    }
+    verify() {
+        for (var i = 0; i < this.ranges.length; i++) {
+            var r = this.ranges[i];
+            if (r[1] < r[0]) {
+                return false;
+            }
+            if (i > 0) {
+                // check with prev
+                var prev = this.ranges[i-1];
+                if (CharRange.nextChar(prev[1]) >= r[0]) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
     append(cRange) {
         for (var r of cRange.ranges) {
@@ -133,35 +157,68 @@ class CharRange {
         return false;
     }
     mergeAround(i) {
-        var range = this.ranges[i];
         // search below and above i to see if the ranges can merge
 
-        // search below
-        if (i >= 1) {
-            var prevRange = this.ranges[i-1];
-            if (CharRange.nextChar(prevRange[1]) === range[0]) {
-                // merge the two
-                prevRange[1] = range[1];
-                // remove range
+        // search belowII
+        while (i >= 1) {
+            var range = this.ranges[i];
+            var prev = this.ranges[i-1];
+            if (range[0] <= CharRange.nextChar(prev[1])) {
+                // merge prev and range into prev
+                prev[0] = CharRange.min(range[0], prev[0]);
+                prev[1] = CharRange.max(range[1], prev[1]);
+
+                // delete range
                 this.ranges.splice(i, 1);
-                // shift index
                 i--;
-                range = this.ranges[i];
+            } else {
+                break;
             }
         }
 
-        // search above
-        if (i < this.ranges.length-1) {
-            var nextRange = this.ranges[i+1];
-            if (CharRange.nextChar(range[1]) === nextRange[0]) {
-                // merge the two
-                nextRange[0] = range[0];
-                // remove range
+        // // search below
+        // if (i >= 1) {
+        //     var prevRange = this.ranges[i-1];
+        //     if (CharRange.nextChar(prevRange[1]) === range[0]) {
+        //         // merge the two
+        //         prevRange[1] = range[1];
+        //         // remove range
+        //         this.ranges.splice(i, 1);
+        //         // shift index
+        //         i--;
+        //         range = this.ranges[i];
+        //     }
+        // }
+
+        // search above II
+        while (i < this.ranges.length-1) {
+            var range = this.ranges[i];
+            var next = this.ranges[i+1];
+            if (CharRange.nextChar(range[1]) >= next[0]) {
+                // merge next and range into next
+                next[0] = CharRange.min(range[0], next[0]);
+                next[1] = CharRange.max(range[1], next[1]);
+
+                // delete range
                 this.ranges.splice(i, 1);
-                // shift index
-                i++;
+                // no need to shift the index
+            } else {
+                break;
             }
         }
+
+        // // search above
+        // if (i < this.ranges.length-1) {
+        //     var nextRange = this.ranges[i+1];
+        //     if (CharRange.nextChar(range[1]) === nextRange[0]) {
+        //         // merge the two
+        //         nextRange[0] = range[0];
+        //         // remove range
+        //         this.ranges.splice(i, 1);
+        //         // shift index
+        //         i++;
+        //     }
+        // }
     }
     get str() {
         var txt = '';
@@ -226,7 +283,8 @@ CharRange.union = function(a, b) {
 // a.add(['9', '9']);
 // a.add(['7', '7']);
 // a.add(['8', '8']);
-// a.add(['a', 'z']);
+// a.add(['c', 'z']);
+// a.add(['9', 'a']);
 // pr(a.str);
 
 // union test

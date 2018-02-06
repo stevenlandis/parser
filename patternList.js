@@ -442,9 +442,9 @@ class PatternList {
 		}
 		return -1;
 	}
-	group(txt, context) {
+	group(txt, context, debug) {
 		var grouper = new Grouper(this, context);
-		grouper.group(txt);
+		grouper.group3(txt, debug);
 		return grouper;
 	}
 }

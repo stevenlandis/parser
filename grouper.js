@@ -170,11 +170,24 @@ class Grouper {
 
 			// valid index
 			function() {
-				if (this.grouper.downStack.length < 1) {
+				if (this.grouper.downStack.length === 0) {
 					return false;
 				}
 
+				// make sure this is a valid move
+				// check previous move
+				if (this.grouper.moves.length >= 2) {
+					var lastMove = this.grouper.moves[this.grouper.moves.length-2][0];
+					if (lastMove === 3 || lastMove === 4) {
+						return false;
+					}
+				}
+
+				// make sure to cycle a fresh downNode
 				var downNode = this.grouper.downNode;
+				if (this.index === 0 && downNode.choiceI !== 0) {
+
+				}
 
 				return downNode.canChoose(this.index + 1);
 			},
@@ -192,22 +205,22 @@ class Grouper {
 					return false;
 				}
 
-				if (this.grouper.moves.length >= 2) {
-					// make sure the last move done can preceed the current move
-					var lastMove = this.grouper.moves[this.grouper.moves.length-2][0];
-					if (lastMove === 4) {
-						return false;
-					}
-				}
+				// if (this.grouper.moves.length >= 2) {
+				// 	// make sure the last move done can preceed the current move
+				// 	var lastMove = this.grouper.moves[this.grouper.moves.length-2][0];
+				// 	if (lastMove === 4) {
+				// 		return false;
+				// 	}
+				// }
 
-				if (this.grouper.downStack.length >= 2) {
-					var po1 = this.grouper.downStack[this.grouper.downStack.length-1];
-					var po2 = this.grouper.downStack[this.grouper.downStack.length-2];
+				// if (this.grouper.downStack.length >= 2) {
+				// 	var po1 = this.grouper.downStack[this.grouper.downStack.length-1];
+				// 	var po2 = this.grouper.downStack[this.grouper.downStack.length-2];
 
-					if (!po1.preceeds(po2)) {
-						return false;
-					}
-				}
+				// 	if (!po1.preceeds(po2)) {
+				// 		return false;
+				// 	}
+				// }
 
 				return true;
 			},
@@ -273,7 +286,7 @@ class Grouper {
 		);
 	}
 	addMove(name, validIndex, canDo, Do, Undo) {
-		this.options.push(new Move(this, name, validIndex, canDo, Do, Undo));
+		this.options.push(new Move(this, name, undefined, validIndex, canDo, Do, Undo));
 	}
 	disp() {
 		var us = this.upStack;
@@ -313,8 +326,91 @@ class Grouper {
 		}
 		pr(txt);
 	}
+	group3(txt, debug, maxN) {
+		this.txt = txt;
+		this.downStack = [];
+		this.upStack = [this.pl.getPO(this.context)];
+		for (var c of txt) {
+			var po = this.pl.getPO(c);
+			this.downStack.unshift(po);
+		}
+
+		this.moves = [[0, 0]];
+
+		var limitMoves = (maxN !== undefined);
+		var i = 0;
+		var nMoves = 0
+		var t0 = performance.now();
+
+		var newMove = true;
+
+		if (debug) {pi();this.disp();pd()};
+		while (this.downStack.length > 0 || this.upStack.length !== 1 || !this.upStack[0].complete) {
+			if (limitMoves && i === maxN) {pr('maximum iterations exceeded');break;}++i;
+
+			var move = this.move;
+			var option = moves[move[0]];
+			// pr('Trying ' + option.name + ' (' + move[1] + ')');
+
+
+			var validMove = true;
+			if (newMove) {
+				// pr('testing new move');
+				validMove = option.validMove(this);
+				if (debug && !validMove) {
+					pr(option.name + ' [invalid move]: ' + option.info);
+				}
+				newMove = false;
+			}
+
+			var validIndex = true;
+			if (validMove) {
+				validIndex = option.validIndex(this);
+				if (debug && !validIndex) {
+					pr(option.name + ' [invalid index] ' + option.info);
+				}
+			}
+
+			if (validMove && validIndex) {
+				if (option.canDo(this)) {
+					option.Do(this);
+					if (debug) pr('Doing ' + option.name);
+					nMoves++;
+					this.moves.push([0, 0]);
+					newMove = true;
+					if (debug) {pi();this.disp();pd()};
+				} else {
+					if (debug) pr(option.name + '('  + move[1] + ') [can\'t do]: ' + option.info);
+					++move[1];
+					newMove = true;
+				}
+			} else {
+				if (move[0]+1 === moves.length) {
+					// backtrack
+					this.moves.pop();
+					if (this.moves.length === 0) {
+						var time = Math.ceil(1000*(performance.now() - t0))/1000;
+						this.info = "Didn't finish with " + i + ' iterations in ' + time + ' ms.';
+						return;
+					}
+					move = this.move;
+					option = moves[move[0]];
+					option.undo(this);
+					++move[1];
+					if (debug) pr('undoing ' + option.name);
+					if (debug) {pi();this.disp();pd()};
+				} else {
+					this.moves[this.moves.length-1] = [move[0]+1, 0];
+					newMove = true;
+				}
+			}
+		}
+		this.finished = true;
+		var time = Math.ceil(1000*(performance.now() - t0))/1000;
+		this.info = 'Grouped with ' + i + ' iterations and ' + this.moves.length + ' moves in ' + time + ' ms.';
+	}
 	group(txt) {
-		var debug = false;
+		var debug = true;
 
 		this.txt = txt;
 		this.downStack = [];
@@ -334,7 +430,11 @@ class Grouper {
 		var nMoves = 0;
 		var t0 = performance.now();
 		while (this.downStack.length > 0 || this.upStack.length !== 1 || !this.upStack[0].complete) {
-			// if (n <= 0) {pr('maximum iterations exceeded');break;}--n;
+			if (n <= 0) {pr('maximum iterations exceeded');break;}--n;
+
+			if (nMoves === 41) {
+				pr('hey');
+			}
 
 			var move = this.moves[this.moves.length-1];
 			var option = this.options[move[0]];
@@ -563,6 +663,12 @@ class Grouper {
 		} else {
 			return this.upStack[this.upStack.length-2];
 		}
+	}
+	get move() {
+		return this.moves[this.moves.length-1];
+	}
+	get lastMove() {
+		return this.moves[this.moves.length-2];
 	}
 }
 
