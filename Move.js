@@ -9,6 +9,7 @@ class Move {
 	}
 }
 
+// 0
 var pushUp = {};
 pushUp.name = 'push up';
 pushUp.validMove = function(grouper) {
@@ -46,12 +47,17 @@ pushUp.undo = function(grouper) {
 	grouper.downStack.push(grouper.upStack.pop());
 }
 
+// 1
 var collapse = {};
 collapse.name = 'collapse';
 collapse.validMove = function(grouper) {
 	// make sure it doesn't follow a cycle
-	if (grouper.moves.length >= 2 && grouper.lastMove[0] === 3) {
-		this.info = 'cannot follow a cycle';
+	if (grouper.moves.length >= 2 && (
+			grouper.lastMove[0] === 3 ||
+			grouper.lastMove[0] === 4
+		)
+	) {
+		this.info = 'cannot follow a ' + moves[grouper.lastMove[0]].name;
 		return false;
 	}
 
@@ -105,10 +111,20 @@ collapse.undo = function(grouper) {
 	grouper.upStack.push(pat);
 };
 
+// 2
 var upgrade = {};
 upgrade.name = 'upgrade';
 upgrade.validMove = function(grouper) {
 	var upNode = grouper.upNode;
+
+	if (grouper.moves.length >= 2 && (
+			grouper.lastMove[0] === 3 ||
+			grouper.lastMove[0] === 4
+		)
+	) {
+		this.info = 'cannot follow a ' + moves[grouper.lastMove[0]].name;
+		return false;
+	}
 
 	// make sure this node can be upgraded
 	if (!upNode.complete) {
@@ -202,12 +218,19 @@ upgrade.undo = function(grouper) {
 	grouper.upStack.push(pat);
 };
 
+// 3
 var cycle = {};
 cycle.name = 'cycle';
 cycle.validMove = function(grouper) {
 	// make sure there is a node to cycle
 	if (grouper.downStack.length === 0) {
 		this.info = 'no nodes in downstack';
+		return false;
+	}
+
+	// make sure the previous move isn't a skip
+	if (grouper.moves.length >= 2 && grouper.lastMove[0] === 4) {
+		this.info = 'cannot follow a skip';
 		return false;
 	}
 
@@ -248,6 +271,7 @@ cycle.undo = function(grouper) {
 	grouper.downNode.choose(0);
 }
 
+// 4
 var skip = {};
 skip.name = 'skip';
 skip.validMove = function(grouper) {

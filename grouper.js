@@ -358,7 +358,7 @@ class Grouper {
 				// pr('testing new move');
 				validMove = option.validMove(this);
 				if (debug && !validMove) {
-					pr(option.name + ' [invalid move]: ' + option.info);
+					pr(i + ': ' + option.name + ' [invalid move]: ' + option.info);
 				}
 				newMove = false;
 			}
@@ -367,20 +367,20 @@ class Grouper {
 			if (validMove) {
 				validIndex = option.validIndex(this);
 				if (debug && !validIndex) {
-					pr(option.name + ' [invalid index] ' + option.info);
+					pr(i + ': ' + option.name + ' [invalid index] ' + option.info);
 				}
 			}
 
 			if (validMove && validIndex) {
 				if (option.canDo(this)) {
 					option.Do(this);
-					if (debug) pr('Doing ' + option.name);
+					if (debug) pr(i + ': ' + 'Doing ' + option.name);
 					nMoves++;
 					this.moves.push([0, 0]);
 					newMove = true;
 					if (debug) {pi();this.disp();pd()};
 				} else {
-					if (debug) pr(option.name + '('  + move[1] + ') [can\'t do]: ' + option.info);
+					if (debug) pr(i + ': ' + option.name + '('  + move[1] + ') [can\'t do]: ' + option.info);
 					++move[1];
 					newMove = true;
 				}
@@ -397,7 +397,7 @@ class Grouper {
 					option = moves[move[0]];
 					option.undo(this);
 					++move[1];
-					if (debug) pr('undoing ' + option.name);
+					if (debug) pr(i + ': ' + 'undoing ' + option.name);
 					if (debug) {pi();this.disp();pd()};
 				} else {
 					this.moves[this.moves.length-1] = [move[0]+1, 0];

@@ -411,7 +411,7 @@ tests.threeBacktrackList = function() {
 	pl.init();
 	// pl.disp();
 
-	var g = pl.group('aaaaaaaaaaaaaaaaaaa', list);
+	var g = pl.group('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa', list);
 	tests.dispInfo(g);
 }
 

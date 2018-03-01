@@ -144,12 +144,20 @@ function readRules(file) {
 	]);
 
 	pl.init();
+
+	console.groupCollapsed('Patterns');
+		pl.disp();
+	console.groupEnd();
+
 	// pl.disp();
 	// console.log(pl);
 	var g = pl.group(testTxt, doc, false);
 	pr(g.info);
-	pr(g.string);
-	pr(g);
+	console.groupCollapsed('Result');
+		pr(g.string);
+		pr(g);
+	console.groupEnd();
+	
 
 }
 
