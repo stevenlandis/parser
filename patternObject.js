@@ -186,7 +186,8 @@ class PatternPO extends PO{
 		this.i = 0;
 		this.parents = [];
 		this.parentI = 0;
-		for (var i of this.pattern.ups) {
+		for (var i of this.pattern.firstUps) {
+		// for (var i of this.pattern.ups) {
 			this.parents.push(i);
 		}
 		// this.parents = Array.from(this.pattern.firstParents);

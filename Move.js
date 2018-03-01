@@ -1,14 +1,3 @@
-class Move {
-	constructor(grouper, name, isValidMove, isValidIndex, canDo, Do, undo) {
-		this.grouper = grouper;
-		this.name = name;
-		this.isValidIndex = isValidIndex;
-		this.canDo = canDo;
-		this.Do = Do;
-		this.undo = undo;
-	}
-}
-
 // 0
 var pushUp = {};
 pushUp.name = 'push up';
@@ -321,4 +310,6 @@ skip.Do = function(grouper) {
 skip.undo = function(grouper) {
 	grouper.upNode.unSkip();
 }
+
+
 var moves = [pushUp, collapse, upgrade, cycle, skip];

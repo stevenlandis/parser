@@ -245,6 +245,11 @@ class PatternList {
 				var child = this.patterns[i[0]];
 				if (!listHas(child.ups, newThing)) {
 					child.ups.push(newThing);
+
+					// see if this is a first up
+					if (newThing[1] <= pat.firstSolidIndex) {
+						child.firstUps.push(newThing);
+					}
 				}
 			}
 		}

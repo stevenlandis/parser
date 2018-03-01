@@ -15,6 +15,7 @@ class Pattern {
 		this.nextUpPatterns = [];
 		this.nextUpRanges = [];
 		this.ups = [];
+		this.firstUps = [];
 		this.name = '';
 	}
 	get optional() {

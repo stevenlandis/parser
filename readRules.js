@@ -1,5 +1,7 @@
+var pl;
+
 function readRules(file) {
-	var pl = new PatternList();
+	pl = new PatternList();
 
 	var letter = pl.Range([['a', 'z'], ['A', 'Z']]);
 	pl.name(letter, 'letter');
@@ -160,5 +162,3 @@ function readRules(file) {
 	
 
 }
-
-readRules();

@@ -480,13 +480,15 @@ tests.dispInfo = function(g) {
 	pd();
 };
 
-// tests.backtrackList();
-// tests.mathPrecedence();
-// tests.addition();
-// tests.endParens();
-// tests.startParens();
-// tests.parens();
-// tests.javascript();
-// tests.twoBacktrackList();
-// tests.threeBacktrackList();
-// tests.simpleJavascript();
+function runTests() {
+	tests.backtrackList();
+	tests.mathPrecedence();
+	tests.addition();
+	tests.endParens();
+	tests.startParens();
+	tests.parens();
+	tests.javascript();
+	tests.twoBacktrackList();
+	tests.threeBacktrackList();
+	tests.simpleJavascript();
+}

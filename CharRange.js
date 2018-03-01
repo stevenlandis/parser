@@ -176,20 +176,6 @@ class CharRange {
             }
         }
 
-        // // search below
-        // if (i >= 1) {
-        //     var prevRange = this.ranges[i-1];
-        //     if (CharRange.nextChar(prevRange[1]) === range[0]) {
-        //         // merge the two
-        //         prevRange[1] = range[1];
-        //         // remove range
-        //         this.ranges.splice(i, 1);
-        //         // shift index
-        //         i--;
-        //         range = this.ranges[i];
-        //     }
-        // }
-
         // search above II
         while (i < this.ranges.length-1) {
             var range = this.ranges[i];
@@ -206,19 +192,6 @@ class CharRange {
                 break;
             }
         }
-
-        // // search above
-        // if (i < this.ranges.length-1) {
-        //     var nextRange = this.ranges[i+1];
-        //     if (CharRange.nextChar(range[1]) === nextRange[0]) {
-        //         // merge the two
-        //         nextRange[0] = range[0];
-        //         // remove range
-        //         this.ranges.splice(i, 1);
-        //         // shift index
-        //         i++;
-        //     }
-        // }
     }
     get str() {
         var txt = '';
