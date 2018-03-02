@@ -64,6 +64,15 @@ class CharRange {
             this.add(r);
         }
     }
+    copy() {
+        var res = new CharRange();
+        for (var r of this.ranges) {
+            res.ranges.push(
+                [r[0], r[1]]
+            );
+        }
+        return res;
+    }
     add(range) {
         // copy range
         range = [range[0], range[1]];
@@ -247,21 +256,21 @@ CharRange.union = function(a, b) {
 }
 
 // very rigorous tests...
-// var a = new CharRange([['a', 'b'], ['c', 'd']]);
-// a.add(['F', 'A']);
-// a.add(['A', 'F']);
-// a.add(['0', '3']);
-// a.add(['5', '5']);
-// a.add(['4', '4']);
-// a.add(['9', '9']);
-// a.add(['7', '7']);
-// a.add(['8', '8']);
-// a.add(['c', 'z']);
-// a.add(['9', 'a']);
-// pr(a.str);
+var a = new CharRange([['a', 'b'], ['c', 'd']]);
+a.add(['F', 'A']);
+a.add(['A', 'F']);
+a.add(['0', '3']);
+a.add(['5', '5']);
+a.add(['4', '4']);
+a.add(['9', '9']);
+a.add(['7', '7']);
+a.add(['8', '8']);
+a.add(['c', 'z']);
+a.add(['9', 'a']);
+pr(a.str);
 
 // union test
-// var a = new CharRange([['a', 'b'], ['d', 'e']]);
-// var b = new CharRange([['c', 'c'], ['f', 'g']]);
-// var c = CharRange.union(a, b);
-// pr(c.str);
+var a = new CharRange([['a', 'b'], ['d', 'e']]);
+var b = new CharRange([['c', 'c'], ['f', 'g']]);
+var c = CharRange.union(a, b);
+pr(c.str);
