@@ -1,3 +1,11 @@
+var Move = {
+	PUSH_UP: 0,
+	COLLAPSE: 1,
+	UPGRADE: 2,
+	CYCLE: 3,
+	SKIP: 4
+};
+
 // 0
 var pushUp = {};
 pushUp.name = 'push up';
@@ -42,8 +50,8 @@ collapse.name = 'collapse';
 collapse.validMove = function(grouper) {
 	// make sure it doesn't follow a cycle
 	if (grouper.moves.length >= 2 && (
-			grouper.lastMove[0] === 3 ||
-			grouper.lastMove[0] === 4
+			grouper.lastMove[0] === Move.CYCLE ||
+			grouper.lastMove[0] === Move.SKIP
 		)
 	) {
 		this.info = 'cannot follow a ' + moves[grouper.lastMove[0]].name;
@@ -107,8 +115,8 @@ upgrade.validMove = function(grouper) {
 	var upNode = grouper.upNode;
 
 	if (grouper.moves.length >= 2 && (
-			grouper.lastMove[0] === 3 ||
-			grouper.lastMove[0] === 4
+			grouper.lastMove[0] === Move.CYCLE ||
+			grouper.lastMove[0] === Move.SKIP
 		)
 	) {
 		this.info = 'cannot follow a ' + moves[grouper.lastMove[0]].name;
@@ -125,15 +133,6 @@ upgrade.validMove = function(grouper) {
 	if (grouper.upStack.length < 2) {
 		this.info = 'no node above for context';
 		return false;
-	}
-
-	// make sure the preceeding moves are valid
-	if (grouper.moves.length >= 2) {
-		var lastMove = grouper.lastMove[0];
-		if (lastMove === 3 || lastMove === 4) {
-			this.info = 'move preceeded by invalid move';
-			return false;
-		}
 	}
 
 	return true;
@@ -218,7 +217,7 @@ cycle.validMove = function(grouper) {
 	}
 
 	// make sure the previous move isn't a skip
-	if (grouper.moves.length >= 2 && grouper.lastMove[0] === 4) {
+	if (grouper.moves.length >= 2 && grouper.lastMove[0] === Move.SKIP) {
 		this.info = 'cannot follow a skip';
 		return false;
 	}
@@ -294,7 +293,7 @@ skip.validMove = function(grouper) {
 	return true;
 };
 skip.validIndex = function(grouper) {
-	// only works on first
+	// only works on first index
 	if (grouper.move[1] !== 0) {
 		this.info = 'Index ' + grouper.move[1] + ' is not 0';
 		return false;

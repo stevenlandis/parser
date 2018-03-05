@@ -1,6 +1,6 @@
 // runTests();
 
-readRules();
+// readRules();
 
-// tests.do();
+tests.do();
 // tests.except();

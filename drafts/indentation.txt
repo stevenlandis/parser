@@ -1,0 +1,93 @@
+WTF is indentation. Seriously, why do people indent stuff.
+
+Oh, right.
+
+It's because text editors suck... I mean it makes code more readable.
+
+So, I have to figure out how to deal with text in two dimmensions:
+1. horizontal (already covered)
+2. vertical (it's gonna suck)
+
+To do vertical grouping, I need to respond to the trigger: '/n'.
+	I will then look at the stack of active vertical groupers.
+
+Por ejemplo:
+def stuff(things):
+	foo1()
+	foo2(foo1)
+	if foo2:
+		potatoes
+
+Lets look at the first indentation trigger between line 1 and 2
+
+def stuff(things):\n
+
+First of all, where the hell does the pattern group?
+
+def stuff(things):, \n, [indented section]
+
+The \n is between the function def line and the function contents
+the two main groups are the function contents and the def line
+
+assumption: whenever a verical grouping starts, it starts greedy
+
+[function def], \n, [function contents]
+
+where function contents is a periodic grouper
+I can look at a periodic grouper kinda like a repeat:
+	It is like a list that's contents are determined as it runs
+
+So, the newline hits
+and gets pushed up into the function after [function def]
+
+After that, the next chars need to go into the earliest vertical on the stack
+so the upnode changes
+
+Periodic:
+	trigger
+	indent pattern
+	content pattern
+
+It is filled when the content pattern is filled.
+
+Or, instead of the upnode changing, the indent pattern is pushed below the newline
+
+So, lets say the indent pattern is filled
+It overrides the push up function and gets added to its parent pattern way above
+
+Eventually, when all the indent patterns get filled, the upnode returns to the content pattern and execution resumes usual operation.
+
+So, how do the fuckers end?
+
+1. The content pattern is complete and the periodic pattern pushes up.
+2. The indent pattern can't be completed
+	in that case, backtrack and try again
+
+The trigger is triggered when it is pushed up:
+Periodic
+Periodic
+contents
+--------
+\n
+
+Periodic1
+Periodic2
+contents
+\n
+--------
+indent 2
+indent 1
+...
+
+Undoing that move will be weird
+The moves will be
+... Push up, Trigger
+
+Maybe the trigger shouldn't be pushing up.
+Instead, trigger when the pattern becomes set in stone
+For example, in a collapse or upgrade (either one locks the pattern in)
+If the patter being upgraded or collapsed up matches the pattern...
+	TRIGGER
+
+the trigger move can be in the form:
+[TRIGGER, # of indents]
