@@ -12,11 +12,12 @@ class PatternList {
 		this.setFirstPatterns();
 		this.setFirstParents();
 		this.setLastPatterns();
-		this.setNamed();
+		// this.setNamed();
 		this.setUps();
 		this.setNext();
 		this.setNextLiterals();
 		this.setUpNexts();
+		this.setNextObjects();
 	}
 
 	Literal(char) {
@@ -61,6 +62,28 @@ class PatternList {
 	}
 	Repeat(pattern) {
 		var n = new Repeat(pattern, this.ID, this);
+		var searchRes = this.search(n);
+		if (searchRes >= 0) {
+			// pr('The node ' + n.string + ' already exists');
+			return searchRes;
+		}
+
+		this.patterns.push(n);
+		return this.ID++;
+	}
+	Ignorable(pattern) {
+		var n = new Ignorable(pattern, this.ID, this);
+		var searchRes = this.search(n);
+		if (searchRes >= 0) {
+			// pr('The node ' + n.string + ' already exists');
+			return searchRes;
+		}
+
+		this.patterns.push(n);
+		return this.ID++;
+	}
+	Except(pattern, not) {
+		var n = new Except(pattern, not, this.ID, this);
 		var searchRes = this.search(n);
 		if (searchRes >= 0) {
 			// pr('The node ' + n.string + ' already exists');
@@ -228,6 +251,18 @@ class PatternList {
 			}
 		}
 	}
+	setNextObjects() {
+		for (var p1 of this.patterns) {
+			for (var i of p1.nextPatterns) {
+				var p2 = this.get(i);
+				if (p2.isLiteral) {
+					p1.nextObjects.add(p2.range);
+				} else {
+					p1.nextObjects.add(i);
+				}
+			}
+		}
+	}
 	setParents() {
 		// loop through all the patterns
 		for (var pat of this.patterns) {
@@ -341,13 +376,6 @@ class PatternList {
 						stack.unshift(i);
 					}
 				}
-			}
-		}
-	}
-	setNamed() {
-		for (var p of this.patterns) {
-			if (p instanceof Named) {
-				this.named.push(p.id);
 			}
 		}
 	}

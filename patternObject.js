@@ -46,15 +46,8 @@ class PO {
 	preceeds(poB) {
 		if (poB.constructor === LiteralPO) {
 			// search all the literals
+			// O(logn)
 			return this.pattern.nextLiteralRange.has(poB.char);
-
-			for (var i of this.pattern.nextLiteralPatterns) {
-				var pat = this.pl.get(i);
-				if (pat.contains(poB.char)) {
-					return true;
-				}
-			}
-			return false;
 		} else {
 			// search everything else
 			return this.pattern.nextPatterns.has(poB.pattern.id);
@@ -69,6 +62,7 @@ class PO {
 	}
 }
 
+
 class LiteralPO extends PO{
 	constructor(pl, char) {
 		// leave the id blank for now
@@ -76,6 +70,7 @@ class LiteralPO extends PO{
 
 		this.char = char;
 		this.result = char;
+		this.source = char;
 
 		this.filled = true;
 		this.complete = true;
@@ -203,12 +198,13 @@ class PatternPO extends PO{
 		}
 		return '[' + res + ']';
 	}
-	// isMatch(thing) {
-	// 	return this.pattern.isMatch(this.i, thing);
-	// }
-	// isPossibleMatch(thing) {
-	// 	return this.pattern.isPossibleMatch(this.i, thing);
-	// }
+	get source() {
+		var res = '';
+		for (var i of this.data) {
+			res += i.source;
+		}
+		return res;
+	}
 	isBelow(po) {
 		if (this.isDirectlyBelow(po)) {
 			return true;
@@ -230,105 +226,24 @@ class PatternPO extends PO{
 	skip() {
 		this.i++;
 		this.filled = this.pattern.isFilled(this.i);
-		this.complete = this.pattern.isComplete(this.i);
+		this.complete = this.pattern.isComplete(this.i, this);
 	}
 	unSkip() {
 		this.i--;
 		this.filled = this.pattern.isFilled(this.i);
-		this.complete = this.pattern.isComplete(this.i);
+		this.complete = this.pattern.isComplete(this.i, this);
 	}
 	add(childPO) {
 		this.data.push(childPO);
 		this.i++;
 		this.filled = this.pattern.isFilled(this.i);
-		this.complete = this.pattern.isComplete(this.i);
+		this.complete = this.pattern.isComplete(this.i, this);
 	}
 	pop() {
 		var res = this.data.pop();
 		this.i--;
 		this.filled = this.pattern.isFilled(this.i);
-		this.complete = this.pattern.isComplete(this.i);
-		return res;
-	}
-}
-
-class ResultPO {
-	constructor(pl, context) {
-		this.pl = pl;
-		this.context = context;
-		this.ctxPat = pl.get(context);
-		this.pattern = this.ctxPat;
-		this.data = [];
-		this.parents = [];
-		this.i = 0;
-		this.minSize = this.ctxPat.minSize;
-		this.filled = false;
-		this.complete = false;
-	}
-	isFilled() {
-		return this.i === 1;
-	}
-	isComplete() {
-		return this.i === 1;
-	}
-	get result() {
-		var res = '';
-		for (var i in this.data) {
-			res += i.result;
-		}
-		return res;
-	}
-	get string2() {
-		return "Result: " + this.context;
-	}
-	isDirectlyBelow(id) {
-		id = id.id;
-		if (this.i === 1) {
-			return false;
-		}
-		return this.context === id;
-	}
-	isBelow(id) {
-		id = id.id;
-		if (this.isDirectlyBelow(id)) {
-			return true;
-		}
-
-		if (this.i === 1) {
-			return false;
-		}
-
-		var fps = this.pl.get(this.context).firstPatterns;
-		pr(fps);
-		return fps.has(id);
-	}
-	canSkip() {
-		if (this.i === 1) {
-			return false;
-		}
-		return this.minSize === 0;
-	}
-	skip() {
-		this.i++;
-		this.filled = this.isFilled();
-		this.complete = this.isComplete();
-	}
-	unSkip() {
-		this.i--;
-		this.filled = this.isFilled();
-		this.complete = this.isComplete();
-	}
-	add(childPO) {
-		this.data.push(childPO);
-		this.i++;
-		this.filled = this.isFilled();
-		this.complete = this.isComplete();
-	}
-	pop() {
-		var res = this.data.pop();
-		this.i--;
-		this.filled = this.isFilled();
-		this.complete = this.isComplete();
+		this.complete = this.pattern.isComplete(this.i, this);
 		return res;
 	}
 }

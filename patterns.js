@@ -9,8 +9,11 @@ class Pattern {
 		this.firstPatterns = new Set();
 		this.firstParents = new Set();
 		this.lastPatterns = new Set();
+
 		this.nextPatterns = new Set();
 		this.nextLiteralPatterns = new Set();
+		this.nextObjects = new ObjectRange();
+
 		this.nextLiteralRange = new CharRange();
 		this.nextUpPatterns = [];
 		this.nextUpRanges = [];
@@ -106,7 +109,7 @@ class List extends Pattern {
 		for (var i = 0; i < this.list.length; i++) {
 			res.push(this.list[i]);
 			node = this.pl.get(this.list[i]);
-			if (!(node.constructor === Repeat || node.constructor === Ignoreable)) {
+			if (!(node.constructor === Repeat || node.constructor === Ignorable)) {
 				break;
 			}
 		}
@@ -118,7 +121,7 @@ class List extends Pattern {
 		for (var i = this.list.length-1; i >= 0; i--) {
 			res.push(this.list[i]);
 			node = this.pl.get(this.list[i]);
-			if (!(node.constructor === Repeat || node.constructor === Ignoreable)) {
+			if (!(node.constructor === Repeat || node.constructor === Ignorable)) {
 				break;
 			}
 		}
@@ -129,7 +132,7 @@ class List extends Pattern {
 			var found = false;
 			for (var i = this.list.length-1; i >= 0; i--) {
 				var node = this.pl.get(this.list[i]);
-				if (!(node.constructor === Repeat || node.constructor === Ignoreable)) {
+				if (!(node.constructor === Repeat || node.constructor === Ignorable)) {
 					this._endIndex = i+1;
 					found = true;
 					break;
@@ -499,30 +502,6 @@ class Repeat extends Pattern {
 	get last() {
 		return [this.pattern];
 	}
-	isMatch(index, thing) {
-		if (typeof thing !== 'number') {
-			return false;
-		}
-		if (index === 0) {
-			return this.pattern === thing;
-		}
-		return false;
-	}
-	isPossibleMatch(index, thing) {
-		if (typeof thing !== 'number') {
-			return false;
-		}
-		if (index === 0) {
-			return this.firstPatterns.has(thing);
-		}
-		return false;
-	}
-	down(index) {
-		if (index === 0) {
-			return [undefined, this.pattern];
-		}
-		return undefined;
-	}
 	setMinSize() {
 		this.minSize = 0;
 	}
@@ -705,71 +684,7 @@ class Range extends Pattern {
 	}
 }
 
-
-
-
-
-
-
-class Named extends Pattern {
-	constructor(name, pattern, id, pl) {
-		super(id, pl);
-		this.name = name;
-		this.pattern = pattern;
-		this.children.add(pattern);
-		this.isLiteral = false;
-
-		this.defaultFilled = false;
-		this.defaultComplete = false;
-	}
-	get string() {
-		return '"' + this.name + '"';
-	}
-	get first() {
-		return [this.pattern];
-	}
-	get last() {
-		return [this.pattern];
-	}
-	down(index) {
-		if (index === 0) {
-			return [this.pattern];
-		}
-		return undefined;
-	}
-	isMatch(index, thing) {
-		if (typeof thing !== 'number') {
-			return false;
-		}
-		if (index === 0) {
-			return thing === this.pattern;
-		}
-		return false;
-	}
-	isPossibleMatch(index, thing) {
-		if (typeof thing !== 'number') {
-			return false;
-		}
-		if (index === 0) {
-			return this.allChildren.has(thing);
-		}
-		return false;
-	}
-	get minSize() {
-		if (this._minSize === undefined) {
-			this._minSize = this.pl.get(this.pattern).minSize;
-		}
-		return this._minSize;
-	}
-	equals(n) {
-		if (this.constructor !== n.constructor) {
-			return false;
-		}
-		return this.name === n.name && this.pattern === n.pattern;
-	}
-}
-
-class Ignoreable extends Pattern {
+class Ignorable extends Pattern {
 	constructor(pattern, id, pl) {
 		super(id, pl);
 		this.pattern = pattern;
@@ -777,11 +692,67 @@ class Ignoreable extends Pattern {
 		this.isLiteral = false;
 		this.minSize = 0;
 
+		this.childs = [[this.pattern, 0]];
+
 		this.defaultFilled = false;
 		this.defaultComplete = true;
+		this.firstSolidIndex = 0;
 	}
+	isFilled(index) {
+		if (index === 0) {
+			return false;
+		}
+		return true;
+	}
+	isComplete(index) {
+		return true;
+	}
+	following(index) {
+		// the or pattern has no internal following patterns
+		// so return empty set
+		return new Set();
+	}
+	isEnd(index) {
+		// the or pattern only holds one pattern, so always true
+		return true;
+	}
+	isBelow(id, index) {
+		// make sure that the index is valid
+		if (index !== 0) {
+			return false;
+		}
+
+		// all indexes are valid
+		// if the ID is a direct match, true
+		if (this.pattern === id) {
+			return true;
+		}
+
+		var pat = this.pl.get(this.pattern);
+		if (pat.firstPatterns.has(id)) {
+			return true;
+		}
+
+		return false;
+	}
+	isDirectlyBelow(id, index) {
+		// make sure that the index is valid
+		if (index !== 0) {
+			return false;
+		}
+
+		return this.pattern === id;
+	}
+	canSkip(index) {
+		if (index !== 0) {
+			return false;
+		}
+
+		return this.minSize === 0;
+	}
+
 	get string() {
-		return '[Ignore? ' + pl.get(this.id).string + ']';
+		return 'Ignore ' + this.pl.get(this.pattern).string + '';
 	}
 	get first() {
 		return [this.pattern];
@@ -789,32 +760,14 @@ class Ignoreable extends Pattern {
 	get last() {
 		return [this.pattern];
 	}
-	down(index) {
-		if (index === 0) {
-			return [this.pattern];
-		}
-		return undefined;
-	}
-	isMatch(index, thing) {
-		if (typeof thing !== 'number') {
-			return false;
-		}
-		if (index === 0) {
-			return this.pattern === thing;
-		}
-		return false;
-	}
-	isPossibleMatch(index, thing) {
-		if (typeof thing !== 'number') {
-			return false;
-		}
-		if (index === 0) {
-			return this.allChildren.has(thing);
-		}
-		return false;
-	}
 	setMinSize() {
 		this.minSize = 0;
+	}
+	get maxSize() {
+		if (this._maxSize === undefined) {
+			this._maxSize = this.pl.get(this.pattern).maxSize;
+		}
+		return this._maxSize;
 	}
 	equals(n) {
 		if (this.constructor !== n.constructor) {
@@ -832,13 +785,69 @@ class Except extends Pattern {
 
 		this.children.add(pattern);
 		//don't add the not
+
 		this.isLiteral = false;
 
 		this.defaultFilled = false;
 		this.defaultComplete = false;
+
+		this.childs = [[this.pattern, 0]];
+
+		this.firstSolidIndex = 0;
 	}
+	isFilled(index) {
+		if (index === 0) {
+			return false;
+		}
+		return true;
+	}
+	isComplete(index, po) {
+		// make sure there is something
+		if (index === 0) {
+			return false;
+		}
+
+		// make sure that thing is not the not
+		var text = po.source;
+		var g = this.pl.group(text, this.not);
+
+		// return if g has finished (it matches not)
+		return !g.finished;
+	}
+	following(index) {
+		// no internal following patterns
+		return new Set();
+	}
+	isEnd(index) {
+		// Except only holds one pattern, so always the end
+		return true;
+	}
+	isBelow(id, index) {
+		if (this.isDirectlyBelow(id, index)) {
+			return true;
+		}
+
+		// make sure the index is valid
+		if (index !== 0) {
+			return false;
+		}
+
+		var pat = this.pl.get(this.pattern);
+		if (pat.firstPatterns.has(id)) {
+			return true;
+		}
+
+		return false;
+	}
+	isDirectlyBelow(id, index) {
+		return this.pattern === id;
+	}
+	canSkip(index) {
+		return index === 0 && this.minSize === 0;
+	}
+
 	get string() {
-		return '[' + this.pl.patterns[this.pattern].string + ' except ' + this.pl.patterns[this.not].string + ']';
+		return 'Except' + this.pl.get(this.pattern).string + ' and not ' + this.pl.get(this.not).string;
 	}
 	get first() {
 		return [this.pattern];
@@ -846,40 +855,23 @@ class Except extends Pattern {
 	get last() {
 		return [this.pattern];
 	}
-	down(index) {
-		if (index === 0) {
-			return [this.pattern];
-		}
-		return undefined;
-	}
-	isMatch(index, thing) {
-		if (typeof thing !== 'number') {
-			return false;
-		}
-		if (index === 0) {
-			return this.pattern === thing;
-		}
-		return false;
-	}
-	isPossibleMatch(index, thing) {
-		if (typeof thing !== 'number') {
-			return false;
-		}
-		if (index === 0) {
-			return this.allChildren.has(thing);
-		}
-		return false;
-	}
 	get minSize() {
 		if (this._minSize === undefined) {
 			this._minSize = this.pl.get(this.pattern).minSize;
 		}
 		return this._minSize;
 	}
+	get maxSize() {
+		if (this._maxSize === undefined) {
+			this._maxSize = this.pl.get(this.pattern).maxSize;
+		}
+		return this._maxSize;
+	}
 	equals(n) {
 		if (this.constructor !== n.constructor) {
 			return false;
 		}
-		return this.pattern === n.pattern && this.not === n.not;
+		return this.pattern === n.pattern &&
+			this.not === n.not;
 	}
 }

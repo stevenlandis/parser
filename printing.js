@@ -39,6 +39,10 @@ function pg(title) {
 	console.groupCollapsed(title);
 }
 
+function pw(text) {
+	console.warn(text);
+}
+
 // end a grouped section
 function pe() {
 	console.groupEnd();

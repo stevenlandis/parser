@@ -1,4 +1,6 @@
-(function() {
+var tests = {};
+
+tests.below = function() {
 	var pl = new PatternList();
 
 	pl.String('stuff');
@@ -15,10 +17,7 @@
 
 	assert(!poStuff.isBelow(poU));
 	assert(poStuff.isBelow(poS));
-
-})();
-
-var tests = {};
+}
 
 tests.backtrackList = function() {
 	var pl = new PatternList();
@@ -467,6 +466,65 @@ tests.simpleJavascript = function() {
 	tests.dispInfo(g);
 }
 
+tests.ignorable = function() {
+	var pl = new PatternList();
+
+	var list = pl.List([
+		pl.Ignorable(pl.Literal('a')),
+		pl.Ignorable(pl.Literal('b')),
+		pl.Ignorable(pl.Literal('c')),
+		pl.Ignorable(pl.Literal('d')),
+		pl.Ignorable(pl.Literal('e'))
+	]);
+
+	pl.init();
+
+	// pl.disp();
+	var g = pl.group('abcde', list);
+	tests.dispInfo(g);
+	g = pl.group('bcde', list);
+	tests.dispInfo(g);
+	g = pl.group('acde', list);
+	tests.dispInfo(g);
+	g = pl.group('abde', list);
+	tests.dispInfo(g);
+	g = pl.group('abce', list);
+	tests.dispInfo(g);
+	g = pl.group('abcd', list);
+	tests.dispInfo(g);
+	// Test warning:
+	// g = pl.group('ba', list);
+	// tests.dispInfo(g);
+};
+
+tests.except = function() {
+	var pl = new PatternList();
+
+	var letter = pl.Range([['a', 'z']]);
+	var reserved = pl.Or([
+		pl.String('var'),
+		pl.String('fore')
+	]);
+
+	var word = pl.Except(
+		pl.List([letter, pl.Repeat(letter)]),
+		reserved
+	);
+
+	pl.init();
+	// pl.disp();
+
+	var g;
+	g = pl.group('fore', word);
+	tests.dispInfo(g);
+	g = pl.group('var', word);
+	tests.dispInfo(g);
+	g = pl.group('foree', word);
+	tests.dispInfo(g);
+	g = pl.group('va', word);
+	tests.dispInfo(g);
+};
+
 tests.dispInfo = function(g) {
 	pr('Grouping "' + g.txt + '"');
 
@@ -475,12 +533,16 @@ tests.dispInfo = function(g) {
 			pr(g.info);
 			pr(g.string);
 		} else {
+			pw('Failed to group:');
 			pr(g.info);
 		}
 	pd();
 };
 
-function runTests() {
+
+
+tests.do = function() {
+	tests.below();
 	tests.backtrackList();
 	tests.mathPrecedence();
 	tests.addition();
@@ -491,4 +553,6 @@ function runTests() {
 	tests.twoBacktrackList();
 	tests.threeBacktrackList();
 	tests.simpleJavascript();
+	tests.ignorable();
+	tests.except();
 }
