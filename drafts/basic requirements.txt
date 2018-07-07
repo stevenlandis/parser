@@ -1,0 +1,91 @@
+basic requirements
+PI = PatternInstance
+
+.can_take(PI)
+    returns true or false
+
+.take(PI)
+	can push linked pattern to trigger stack
+    returns nothing
+
+.firsts()
+    returns a PatternSet of all possible first values
+    just because a Pattern is in firsts does not mean a new PatternInstance will accept the pattern
+    can have more than the accepted pattern, just not less
+    equivalent to the set of accepted patterns for a newly created pattern
+
+.is_complete()
+    returns true or false
+    states whether the pattern is validated
+
+.is_full()
+    returns true or false
+    states whether the PI can accept more PIs
+    is equivalent to saying the takes set is null
+
+.can_skip()
+    returns true or false
+    states whether the current accepting pattern can be ignored (filled with an empty PI)
+    is equivalent to saying that at least one of the take set is optional
+    is equivalent to saying that at least one of the take set PIs is complete when first created
+
+.is_group()
+    returns true or false
+    indicates whether this pattern is a main group
+        similar to () in regex
+
+.skip()
+    returns nothing
+    moves to the next acceptor
+
+.can_be_single()
+    returns true or false
+    states whether the Pattern can be completed with a single PI
+    used to find infinite loops
+
+.triggers()
+    returns a set of triggers that are active inside this pattern
+    the triggers are pushed onto their respective trigger stacks
+
+.passives()
+    returns a set of passive patterns to always search for
+
+.blocked_triggers()
+    set of triggers (identified by trigger pattern id) to block
+
+.blocked_passives()
+    set of passives (identified by passive id) to block
+
+
+State info
+----------
+
+.state_count()
+    returns an integer >= 1 {1, 2, 3, 4, 5}
+
+.followers()
+    returns a .state_count() length array where each element has a PatternSet containing
+        all internal following patterns
+    "after the current acceptor is filled, the following pattenrs can be next"
+
+.take_sets()
+    returns a .state_count() length array where each element has a PatternSet containing
+        all patterns accepted in the current state
+    does not guarentee that .can_take(PI) will be true
+    just used to cut down the number of possible patterns
+
+
+Optional
+--------
+
+.is_optional()
+    returns true or false
+    states whether a pattern needs PIs to be complete
+    is equivalent to testing whether a new PI is complete
+
+Upgrades (derived from .firsts())
+    reverse mapping of Patterns to firsts
+    map from firsts to patterns
+    every pattern has a set of patterns that they are first in
+        cycled through when upgrading
+

@@ -1,0 +1,9 @@
+trigger
+
+given a string s
+
+after every occurence of pattern p
+the pattern pt is pushed to the stack
+    with special push up properties
+
+the pattern pt must be completed for the pattern to continue accepting

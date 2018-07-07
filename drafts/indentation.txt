@@ -91,3 +91,16 @@ If the patter being upgraded or collapsed up matches the pattern...
 
 the trigger move can be in the form:
 [TRIGGER, # of indents]
+which will make it easy to pop the indent pattern objects off the stack.
+
+SO, to recap
+1. trigger pattern is upgraded or pushed up
+2. indent patterns from the periodic stack are pushed onto downstack
+3. the indent patterns are filled and pushed up into their respective periodics
+4. grouping continues normally
+
+This might actually work
+
+Concerns:
+1. crazy computational complexity because indent patterns are too greedy
+2. empty rows, wtf text editors

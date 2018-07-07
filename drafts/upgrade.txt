@@ -1,0 +1,89 @@
+upgrade
+push up
+skip
+collapse
+
+trigger
+
+I can define bases (list, or, repeat, except, ignorable)
+
+Base interface
+
+every base has a bunch of indexes
+each index can hold a single PO
+a lot only hold one (or, except, ignorable, trigger)
+	takes
+	deep_takes
+	can_skip
+	at each index
+		can_skip
+
+universal Base
+	a bunch of upgrades (only firsts) (pattern and index)
+	ups (superset of upgrades)
+		store following information
+
+List
+	has a bunch of indexes
+	at each index:
+		takes (upgrade, collapse)
+		deep_takes (push_up, upgrade)
+		internal_followers
+
+function arguments
+	index
+	PO data
+
+PatternTemplate
+Pattern
+PatternObject
+
+bare requirements
+	firsts(data)
+	lasts(data)
+	last_unique_index(data) -> Int
+	can_skip(data) -> Boolean
+		whole pattern
+	triggers(data) -> PatternSet()
+		triggers that the pattern listens for
+	trigger_blocks(data) -> blocks all specified patterns from using triggers
+
+	takes(data, index) -> PatternSet
+	is_complete(data, index) -> Boolean
+	can_skip_index(data, index) -> Boolean
+		specific index
+
+	maybe:
+		equals(pattern)
+
+optional
+	description -> "List [29, 32, 17]"
+	min_rep -> "a,b,c"
+
+for (var [word] = [express]; [word] < [expr]; [word]++) {
+	[body]
+}
+
+for (var i = 0; i < 10; i++) {
+	i++;
+	console.log('hi: ' + i);
+}
+
+
+derived
+	takes_deep(index)
+	can_skip(index)
+		the associated pattern has a min length of zero
+	required_patterns() -> PatternSet (doesn't have counts)
+	required_form() -> [Pattern] (still hard to get pattern count)
+	required_counts() -> [(Pattern, count)] (doesn't have order)
+	first_required_index
+
+additional things
+	followers(index) -> PatternSet
+	deep_followers(index) -> PatternSet
+
+min_rep with except
+	wtf???
+
+soooo, no min_rep

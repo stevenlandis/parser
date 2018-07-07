@@ -1,0 +1,185 @@
+How do I store disjoint patterns?
+    in a set?
+        do I let index determine order and everything else is unordered?
+
+1+2+3+4+5
+
+is the same as calling the join function on:
+    list: [1,2,3,4,5]
+    join pattern: +
+
+this further separates the actual string from the grouped pattern
+
+Indentation
+    Line breaks
+        addition
+            numbers
+
+1 +
+    2  + 3 +
+    4 +
+5 + 6
++  7
+
+how do I store where the joins go?
+    also inserts
+
+It is all about inserting PIs into other PIs
+    insert before index i enables PIs to go anywhere
+
+ANYWHERE
+
+or
+when PIs assemble their contents into text
+they can have a giant reference array that holds all the indexes (and order) of how to insert the patterns
+
+{1, 2, 3, 4, 5, 6, 7}
+    [0 1 2 3 4 5 6]
+    1234567
+{%, '+'}
+    [0.0 1 0.1 1 0.2 1 0.3 1 0.4 1 0.5 1 0.6]
+    1+2+3+4+5+6+7
+{%, ' ', '  ', ' ', ' ', ' ', ' ', ' ', '  '}
+    [0.0 1 0.1 2 0.2 3 0.3 4]
+    1 +2  + 3 +4 +5 + 6+  7
+
+raw:        |1_+\n\t2__+_3_+\n\t4_+\n5_+_6\n+__7
+numbers:    |1      2    3      4    5   6     7
+addition:   |  +       +   +      +    +    +
+spacing:    | _      __ _ _      _    _ _    __
+new lines:  |   \n          \n     \n     \n
+tabs:       |     \t          \t
+
+Overly Complicated Addition
+Trigger[
+    triggering pattern: new line
+    consuming pattern: \t*
+    child pattern: Passive[
+        consuming pattern: \n
+        child pattern: Passive[
+            consuming pattern: _+
+            child pattern: Delimiter[
+                node pattern: \d+
+                delimiter pattern: '+'
+            ]
+        ]
+    ]
+]
+
+what about state machines where parent patterns can change and react to the state of child patterns?
+
+So for 1+2+3+4
+
+The child pattern groups numbers in something like \d+
+Then it goes to some state 2 that is a trap state
+The only way to escape from q2 is for the parent pattern (a passive that listens for '+') sucessfuly groups it
+    it then resets its child state back to one so it can continue grouping
+
+The other way is to have the pattern
+number, (+, number)+ and store the data in a functional way
+    something like Total[number list]
+
+The end goal is to separate syntax from meaning
+    separate '1+2+3+4+5' from Total[{1,2,3,4,5}]
+    In other words, total can be a function that generates the string '1+2+3+4+5' given the list {1,2,3,4,5}
+    The goal is to find that inverse function
+
+Finding the inverse function
+My goal is to give the user a series of string generating functions specially chosen to be easy to find the inverse of.
+    The parser's job is to take an end string and find the set of functions that can generate it.
+
+function Total(num_list) {
+    assert(length(num_list) is at least 2)
+
+    out += num_list[0];
+    
+    int i = 1;
+    while i < length(num_list) {
+        out += '+'
+        out += num_list[i]
+
+        i++
+    }
+}
+
+Inverse function? List[number, '+', number, Repeat['+', number]]
+Could also be thought of as the generic form of the output of the function
+
+The Tab Solution
+    1. Split the text up into lines and store tabs in a line array
+        patterns remember which line they belong to and I can get info from that
+        Cons: seems too ridgid and won't generalize well for other forms of 2d data
+
+1 2 -1 -1 --1 --1 -1 -1 2 1
+
+1
+2
+    1
+    1
+        1
+        1
+    1
+    1
+2
+1
+
+what about storing character info in a parralel tree?
+
+1 + (2 * 3 ^ 4) + 5
+
+{1,{2,{3,4},5}}
+
+Plus[1, Times[2, Pow[3, 4]], 5]
+
+LOF: it will be ok to store text in a functional form
+    Requirement: all groupings turn into identical strings
+    It will be easier to modify text in it's functional form
+
+{1, { {2, {3, 4} } }, 5}
+
+ows = ' '*
+
+pow_node = number | paren
+power = number, (ows, '^', ows, number)+
+
+mult_node = pow_node | power
+mult = mult node, (ows, '*', ows, mult_node)+
+
+add_node = mult node | mult
+add = add node, (ows, '+', ows, add_node)
+
+expression = add | add_node
+
+paren = '(', ows, expression, ows, ')'
+
+not_expression = ANY* ! expression
+
+spaced_expression = expression || ' '
+
+new_lines = spaced_expression || '\n'
+
+tabs = new_lines || NEW_LINE -> '\t'*
+
+tabs are fucking intersecting patterns
+    the things I said I would never touch
+
+2 main uses of tabs
+title and body
+    like this
+    the body is a subset of the title
+
+like parenthases
+    function a() {
+        function b() {
+            if (stuff) {
+                print('things');
+            }
+        }
+    }
+
+Tab[pattern, tab_pattern]
+    every new line character in pattern triggers the tab_pattern
+
+tab = line, ('\n', line)*
+
+line = 
