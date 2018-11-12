@@ -95,6 +95,8 @@ Then, calling group('((((This is a sentence.))))', nestedSentence) will return t
 ------------
 If you want to see some more examples written in javascript (not the pseudocode above), look in tests.js to see a bunch of example pattern lists. These tests also show some more advanced features of the parser such as backtracking and challenging recursive languages.
 
+To run the tests, just open index.html in a web browser and open the developer console to see the output.
+
 -------------------
  File Descriptions
 -------------------
